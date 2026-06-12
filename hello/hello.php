@@ -39,14 +39,14 @@ add_action('plugins_loaded', 'hello_boot');
 
 function hello_activate(): void
 {
-    if (! get_option('beeper_comments_bot_secret')) {
-        update_option('beeper_comments_bot_secret', wp_generate_password(48, false, false));
+    if (! get_option('hello_bot_secret')) {
+        update_option('hello_bot_secret', wp_generate_password(48, false, false));
     }
 
-    add_option('beeper_comments_homeserver', 'https://matrix.org');
-    add_option('beeper_comments_room_alias_prefix', 'post-');
-    add_option('beeper_comments_gravatar_fallback', 'matrix_display_name');
-    add_option('beeper_comments_sync_direction', 'both');
-    add_option('beeper_comments_redact_on_moderation', '1');
+    add_option('hello_homeserver', 'https://matrix.org');
+    add_option('hello_room_alias_prefix', 'post-');
+    add_option('hello_gravatar_fallback', 'matrix_display_name');
+    add_option('hello_sync_direction', 'both');
+    add_option('hello_redact_on_moderation', '1');
 }
 register_activation_hook(__FILE__, 'hello_activate');

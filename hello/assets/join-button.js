@@ -1,5 +1,5 @@
 (() => {
-  const buttons = document.querySelectorAll('.beeper-join-btn[data-matrix-uri][data-web-uri]');
+  const buttons = document.querySelectorAll('.hello-join-btn[data-matrix-uri][data-web-uri]');
 
   buttons.forEach((button) => {
     button.addEventListener('click', () => {

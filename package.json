@@ -6,7 +6,7 @@
   "scripts": {
     "check": "npm run check:php && npm --prefix bot run check && npm --prefix bot test",
     "check:php": "find hello -name '*.php' -print0 | xargs -0 -n1 php -l",
-    "package:plugin": "mkdir -p dist && rm -f dist/hello.zip dist/beeper-comments.zip && cd hello && zip -qr ../dist/hello.zip ."
+    "package:plugin": "mkdir -p dist && rm -f dist/hello.zip && cd hello && zip -qr ../dist/hello.zip ."
   },
   "workspaces": [
     "bot"

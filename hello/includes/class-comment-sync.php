@@ -12,15 +12,15 @@ use WP_REST_Response;
 
 class Comment_Sync
 {
-    public const META_ROOM_ID = '_beeper_comments_room_id';
-    public const META_ROOM_ALIAS = '_beeper_comments_room_alias';
-    public const META_ORIGIN = '_beeper_comments_origin';
-    public const META_SYNCED = '_beeper_comments_synced';
-    public const META_MATRIX_ID = '_beeper_comments_matrix_id';
-    public const META_EVENT_ID = '_beeper_comments_event_id';
-    public const META_WP_MATRIX_EVENT_ID = '_beeper_comments_wp_matrix_event_id';
-    public const META_MATRIX_REDACTED = '_beeper_comments_matrix_redacted';
-    public const META_LAST_ERROR = '_beeper_comments_last_error';
+    public const META_ROOM_ID = '_hello_room_id';
+    public const META_ROOM_ALIAS = '_hello_room_alias';
+    public const META_ORIGIN = '_hello_origin';
+    public const META_SYNCED = '_hello_synced';
+    public const META_MATRIX_ID = '_hello_matrix_id';
+    public const META_EVENT_ID = '_hello_event_id';
+    public const META_WP_MATRIX_EVENT_ID = '_hello_wp_matrix_event_id';
+    public const META_MATRIX_REDACTED = '_hello_matrix_redacted';
+    public const META_LAST_ERROR = '_hello_last_error';
 
     public function boot(): void
     {
@@ -95,14 +95,7 @@ class Comment_Sync
 
     public function register_rest_routes(): void
     {
-        foreach (['hello/v1', 'beeper-comments/v1'] as $namespace) {
-            $this->register_routes_for_namespace($namespace);
-        }
-    }
-
-    private function register_routes_for_namespace(string $namespace): void
-    {
-        register_rest_route($namespace, '/incoming', [
+        register_rest_route('hello/v1', '/incoming', [
             'methods' => 'POST',
             'callback' => [$this, 'handle_incoming_matrix_message'],
             'permission_callback' => '__return_true',
@@ -130,7 +123,7 @@ class Comment_Sync
             ],
         ]);
 
-        register_rest_route($namespace, '/rooms', [
+        register_rest_route('hello/v1', '/rooms', [
             'methods' => 'POST',
             'callback' => [$this, 'handle_rooms_request'],
             'permission_callback' => '__return_true',
@@ -142,7 +135,7 @@ class Comment_Sync
             ],
         ]);
 
-        register_rest_route($namespace, '/health', [
+        register_rest_route('hello/v1', '/health', [
             'methods' => 'POST',
             'callback' => [$this, 'handle_health_request'],
             'permission_callback' => '__return_true',
@@ -214,12 +207,12 @@ class Comment_Sync
 
         $hash = Gravatar::sanitize_hash((string) $request->get_param('author_email_hash'));
         if ($hash !== '') {
-            add_comment_meta($comment_id, '_beeper_comments_gravatar_hash', $hash, true);
+            add_comment_meta($comment_id, '_hello_gravatar_hash', $hash, true);
         }
 
         $avatar_url = esc_url_raw((string) $request->get_param('author_avatar_url'));
         if ($avatar_url !== '') {
-            add_comment_meta($comment_id, '_beeper_comments_gravatar_avatar_url', $avatar_url, true);
+            add_comment_meta($comment_id, '_hello_gravatar_avatar_url', $avatar_url, true);
         }
 
         return new WP_REST_Response([
@@ -436,7 +429,7 @@ class Comment_Sync
         <div class="hello-join">
             <a
                 href="<?php echo esc_url($matrix_uri, ['matrix']); ?>"
-                class="beeper-join-btn"
+                class="hello-join-btn"
                 data-matrix-uri="<?php echo esc_attr($matrix_uri); ?>"
                 data-web-uri="<?php echo esc_url($web_uri); ?>"
             ><?php esc_html_e('Join the discussion in Beeper', 'hello'); ?></a>
@@ -450,13 +443,13 @@ class Comment_Sync
 
     private function sync_direction(): string
     {
-        $direction = (string) get_option('beeper_comments_sync_direction', 'both');
+        $direction = (string) get_option('hello_sync_direction', 'both');
         return in_array($direction, ['both', 'matrix_to_wp', 'wp_to_matrix'], true) ? $direction : 'both';
     }
 
     private function validate_bot_secret(WP_REST_Request $request): ?WP_REST_Response
     {
-        $secret = (string) get_option('beeper_comments_bot_secret', '');
+        $secret = (string) get_option('hello_bot_secret', '');
         if ($secret === '' || ! hash_equals($secret, (string) $request->get_param('bot_secret'))) {
             return new WP_REST_Response(['message' => __('Invalid bot secret.', 'hello')], 403);
         }
@@ -503,7 +496,7 @@ class Comment_Sync
 
     private function redact_matrix_event_for_comment(WP_Comment $comment, string $status): void
     {
-        if ((string) get_option('beeper_comments_redact_on_moderation', '1') !== '1') {
+        if ((string) get_option('hello_redact_on_moderation', '1') !== '1') {
             return;
         }
 

@@ -8,14 +8,14 @@ class Admin_Settings
 {
     /** @var array<string, string> */
     private array $settings = [
-        'beeper_comments_homeserver' => 'url',
-        'beeper_comments_bot_token' => 'token',
-        'beeper_comments_bot_user' => 'text',
-        'beeper_comments_bot_secret' => 'secret',
-        'beeper_comments_room_alias_prefix' => 'text',
-        'beeper_comments_gravatar_fallback' => 'select',
-        'beeper_comments_sync_direction' => 'select',
-        'beeper_comments_redact_on_moderation' => 'checkbox',
+        'hello_homeserver' => 'url',
+        'hello_bot_token' => 'token',
+        'hello_bot_user' => 'text',
+        'hello_bot_secret' => 'secret',
+        'hello_room_alias_prefix' => 'text',
+        'hello_gravatar_fallback' => 'select',
+        'hello_sync_direction' => 'select',
+        'hello_redact_on_moderation' => 'checkbox',
     ];
 
     public function boot(): void
@@ -52,11 +52,11 @@ class Admin_Settings
             'hello'
         );
 
-        $this->add_field('beeper_comments_homeserver', __('Homeserver URL', 'hello'), 'url');
-        $this->add_field('beeper_comments_bot_token', __('Bot access token', 'hello'), 'password');
-        $this->add_field('beeper_comments_bot_user', __('Bot user ID', 'hello'), 'text');
-        $this->add_field('beeper_comments_bot_secret', __('Webhook shared secret', 'hello'), 'password');
-        $this->add_field('beeper_comments_room_alias_prefix', __('Room alias prefix', 'hello'), 'text');
+        $this->add_field('hello_homeserver', __('Homeserver URL', 'hello'), 'url');
+        $this->add_field('hello_bot_token', __('Bot access token', 'hello'), 'password');
+        $this->add_field('hello_bot_user', __('Bot user ID', 'hello'), 'text');
+        $this->add_field('hello_bot_secret', __('Webhook shared secret', 'hello'), 'password');
+        $this->add_field('hello_room_alias_prefix', __('Room alias prefix', 'hello'), 'text');
 
         add_settings_section(
             'hello_behavior',
@@ -65,9 +65,9 @@ class Admin_Settings
             'hello'
         );
 
-        $this->add_field('beeper_comments_sync_direction', __('Sync direction', 'hello'), 'select');
-        $this->add_field('beeper_comments_gravatar_fallback', __('Gravatar fallback', 'hello'), 'select');
-        $this->add_field('beeper_comments_redact_on_moderation', __('Redact moderated Matrix messages', 'hello'), 'checkbox');
+        $this->add_field('hello_sync_direction', __('Sync direction', 'hello'), 'select');
+        $this->add_field('hello_gravatar_fallback', __('Gravatar fallback', 'hello'), 'select');
+        $this->add_field('hello_redact_on_moderation', __('Redact moderated Matrix messages', 'hello'), 'checkbox');
     }
 
     public function render_page(): void
@@ -92,19 +92,19 @@ class Admin_Settings
 
     public function sanitize_setting(string $value, string $option): string
     {
-        if ($option === 'beeper_comments_homeserver') {
+        if ($option === 'hello_homeserver') {
             return esc_url_raw(rtrim($value, '/'));
         }
 
-        if ($option === 'beeper_comments_sync_direction') {
+        if ($option === 'hello_sync_direction') {
             return in_array($value, ['both', 'matrix_to_wp', 'wp_to_matrix'], true) ? $value : 'both';
         }
 
-        if ($option === 'beeper_comments_gravatar_fallback') {
+        if ($option === 'hello_gravatar_fallback') {
             return in_array($value, ['matrix_display_name', 'anonymous'], true) ? $value : 'matrix_display_name';
         }
 
-        if ($option === 'beeper_comments_redact_on_moderation') {
+        if ($option === 'hello_redact_on_moderation') {
             return $value === '1' ? '1' : '0';
         }
 
@@ -126,7 +126,7 @@ class Admin_Settings
     {
         $value = (string) get_option($option, $this->default_for($option));
 
-        if ($option === 'beeper_comments_sync_direction') {
+        if ($option === 'hello_sync_direction') {
             $choices = [
                 'both' => __('Both directions', 'hello'),
                 'matrix_to_wp' => __('Matrix to WordPress only', 'hello'),
@@ -136,7 +136,7 @@ class Admin_Settings
             return;
         }
 
-        if ($option === 'beeper_comments_gravatar_fallback') {
+        if ($option === 'hello_gravatar_fallback') {
             $choices = [
                 'matrix_display_name' => __('Use Matrix display name', 'hello'),
                 'anonymous' => __('Use Anonymous', 'hello'),
@@ -145,7 +145,7 @@ class Admin_Settings
             return;
         }
 
-        if ($option === 'beeper_comments_redact_on_moderation') {
+        if ($option === 'hello_redact_on_moderation') {
             printf(
                 '<input type="hidden" name="%1$s" value="0" /><label><input type="checkbox" name="%1$s" value="1" %2$s /> %3$s</label>',
                 esc_attr($option),
@@ -162,7 +162,7 @@ class Admin_Settings
             esc_attr($value)
         );
 
-        if ($option === 'beeper_comments_bot_secret') {
+        if ($option === 'hello_bot_secret') {
             echo '<p class="description">' . esc_html__('Use the same value in the bot WORDPRESS_BOT_SECRET environment variable.', 'hello') . '</p>';
         }
     }
@@ -187,14 +187,14 @@ class Admin_Settings
     private function default_for(string $option): string
     {
         $defaults = [
-            'beeper_comments_homeserver' => 'https://matrix.org',
-            'beeper_comments_bot_token' => '',
-            'beeper_comments_bot_user' => '',
-            'beeper_comments_bot_secret' => '',
-            'beeper_comments_room_alias_prefix' => 'post-',
-            'beeper_comments_gravatar_fallback' => 'matrix_display_name',
-            'beeper_comments_sync_direction' => 'both',
-            'beeper_comments_redact_on_moderation' => '1',
+            'hello_homeserver' => 'https://matrix.org',
+            'hello_bot_token' => '',
+            'hello_bot_user' => '',
+            'hello_bot_secret' => '',
+            'hello_room_alias_prefix' => 'post-',
+            'hello_gravatar_fallback' => 'matrix_display_name',
+            'hello_sync_direction' => 'both',
+            'hello_redact_on_moderation' => '1',
         ];
 
         return $defaults[$option] ?? '';
@@ -216,7 +216,7 @@ class Admin_Settings
         ]));
 
         $base = rest_url('hello/v1/');
-        $secret = (string) get_option('beeper_comments_bot_secret', '');
+        $secret = (string) get_option('hello_bot_secret', '');
         ?>
         <hr>
         <h2><?php esc_html_e('Bot Connection', 'hello'); ?></h2>
@@ -243,9 +243,9 @@ class Admin_Settings
         <h3><?php esc_html_e('Bot environment', 'hello'); ?></h3>
         <textarea readonly rows="7" class="large-text code" style="max-width: 760px;"><?php
         echo esc_textarea(
-            'MATRIX_HOMESERVER_URL=' . (string) get_option('beeper_comments_homeserver', 'https://matrix.org') . "\n" .
-            'MATRIX_ACCESS_TOKEN=' . (string) get_option('beeper_comments_bot_token', '') . "\n" .
-            'MATRIX_USER_ID=' . (string) get_option('beeper_comments_bot_user', '') . "\n" .
+            'MATRIX_HOMESERVER_URL=' . (string) get_option('hello_homeserver', 'https://matrix.org') . "\n" .
+            'MATRIX_ACCESS_TOKEN=' . (string) get_option('hello_bot_token', '') . "\n" .
+            'MATRIX_USER_ID=' . (string) get_option('hello_bot_user', '') . "\n" .
             'WORDPRESS_BASE_URL=' . home_url('/') . "\n" .
             'WORDPRESS_BOT_SECRET=' . $secret . "\n" .
             'IDENTITY_STORE_PATH=.data/identities.json' . "\n" .

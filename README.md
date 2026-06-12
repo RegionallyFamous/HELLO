@@ -58,8 +58,6 @@ The plugin REST webhook is:
 POST /wp-json/hello/v1/incoming
 ```
 
-The legacy `/wp-json/beeper-comments/v1/*` routes are also registered for compatibility.
-
 The webhook requires `bot_secret` to match the value stored in WordPress settings.
 
 See [DEPLOYMENT.md](DEPLOYMENT.md) for the production runbook.

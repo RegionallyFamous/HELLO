@@ -2,7 +2,7 @@
   margin-block: 1.5rem;
 }
 
-.beeper-join-btn {
+.hello-join-btn {
   display: inline-flex;
   align-items: center;
   min-height: 2.75rem;
@@ -15,8 +15,8 @@
   text-decoration: none;
 }
 
-.beeper-join-btn:hover,
-.beeper-join-btn:focus {
+.hello-join-btn:hover,
+.hello-join-btn:focus {
   background: #2563eb;
   color: #ffffff;
 }

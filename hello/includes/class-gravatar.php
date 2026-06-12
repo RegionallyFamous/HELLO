@@ -30,14 +30,14 @@ class Gravatar
             return $args;
         }
 
-        $avatar_url = (string) get_comment_meta((int) $comment->comment_ID, '_beeper_comments_gravatar_avatar_url', true);
+        $avatar_url = (string) get_comment_meta((int) $comment->comment_ID, '_hello_gravatar_avatar_url', true);
         if ($avatar_url !== '') {
             $args['url'] = esc_url_raw($avatar_url);
             $args['found_avatar'] = true;
             return $args;
         }
 
-        $hash = self::sanitize_hash((string) get_comment_meta((int) $comment->comment_ID, '_beeper_comments_gravatar_hash', true));
+        $hash = self::sanitize_hash((string) get_comment_meta((int) $comment->comment_ID, '_hello_gravatar_hash', true));
         if ($hash === '') {
             return $args;
         }

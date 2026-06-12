@@ -35,7 +35,7 @@ In WordPress settings, fill in:
 
 The settings page includes a copyable `.env` block for the bot.
 
-The primary REST namespace is `/wp-json/hello/v1`. The previous `/wp-json/beeper-comments/v1` namespace is still registered as a compatibility alias.
+The primary REST namespace is `/wp-json/hello/v1`.
 
 ## 3. Run The Bot
 
