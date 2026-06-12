@@ -1,4 +1,4 @@
-.beeper-comments-join {
+.hello-join {
   margin-block: 1.5rem;
 }
 
@@ -21,7 +21,7 @@
   color: #ffffff;
 }
 
-.beeper-comments-hint {
+.hello-hint {
   max-width: 36rem;
   margin: 0.65rem 0 0;
   color: #4b5563;
@@ -29,6 +29,6 @@
   line-height: 1.5;
 }
 
-.beeper-comments-hint a {
+.hello-hint a {
   white-space: nowrap;
 }

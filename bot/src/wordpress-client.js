@@ -19,7 +19,7 @@ export class WordPressClient {
   }
 
   async postBotEndpoint(endpoint, payload = {}, options = {}) {
-    const response = await this.fetch(`${this.baseUrl}/wp-json/beeper-comments/v1/${endpoint}`, {
+    const response = await this.fetch(`${this.baseUrl}/wp-json/hello/v1/${endpoint}`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json'

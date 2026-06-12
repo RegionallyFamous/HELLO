@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace BeeperComments;
+namespace Hello;
 
 use WP_Error;
 use WP_Post;
@@ -31,7 +31,7 @@ class Matrix_API
     public function create_room_for_post(WP_Post $post)
     {
         if (! $this->is_configured()) {
-            return new WP_Error('beeper_comments_matrix_not_configured', __('Matrix homeserver and bot token are required.', 'beeper-comments'));
+            return new WP_Error('beeper_comments_matrix_not_configured', __('Matrix homeserver and bot token are required.', 'hello'));
         }
 
         $alias_prefix = $this->sanitize_alias_prefix((string) get_option('beeper_comments_room_alias_prefix', 'post-'));
@@ -41,8 +41,8 @@ class Matrix_API
 
         $room_alias_name = $alias_prefix . (string) $post->ID;
         $payload = [
-            'name' => sprintf(__('Comments: %s', 'beeper-comments'), get_the_title($post)),
-            'topic' => sprintf(__('Discussion thread for: %s', 'beeper-comments'), get_permalink($post)),
+            'name' => sprintf(__('Comments: %s', 'hello'), get_the_title($post)),
+            'topic' => sprintf(__('Discussion thread for: %s', 'hello'), get_permalink($post)),
             'preset' => 'public_chat',
             'room_alias_name' => $room_alias_name,
             'initial_state' => [
@@ -61,7 +61,7 @@ class Matrix_API
         }
 
         if (empty($response['room_id']) || ! is_string($response['room_id'])) {
-            return new WP_Error('beeper_comments_missing_room_id', __('Matrix did not return a room ID.', 'beeper-comments'));
+            return new WP_Error('beeper_comments_missing_room_id', __('Matrix did not return a room ID.', 'hello'));
         }
 
         $result = [
@@ -83,7 +83,7 @@ class Matrix_API
     public function get_account()
     {
         if (! $this->is_configured()) {
-            return new WP_Error('beeper_comments_matrix_not_configured', __('Matrix homeserver and bot token are required.', 'beeper-comments'));
+            return new WP_Error('beeper_comments_matrix_not_configured', __('Matrix homeserver and bot token are required.', 'hello'));
         }
 
         return $this->request('GET', '/_matrix/client/v3/account/whoami');
@@ -95,7 +95,7 @@ class Matrix_API
     public function send_room_message(string $room_id, string $message, string $transaction_id)
     {
         if (! $this->is_configured()) {
-            return new WP_Error('beeper_comments_matrix_not_configured', __('Matrix homeserver and bot token are required.', 'beeper-comments'));
+            return new WP_Error('beeper_comments_matrix_not_configured', __('Matrix homeserver and bot token are required.', 'hello'));
         }
 
         $path = sprintf(
@@ -116,7 +116,7 @@ class Matrix_API
     public function redact_event(string $room_id, string $event_id, string $reason, string $transaction_id)
     {
         if (! $this->is_configured()) {
-            return new WP_Error('beeper_comments_matrix_not_configured', __('Matrix homeserver and bot token are required.', 'beeper-comments'));
+            return new WP_Error('beeper_comments_matrix_not_configured', __('Matrix homeserver and bot token are required.', 'hello'));
         }
 
         $path = sprintf(

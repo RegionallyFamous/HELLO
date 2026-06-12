@@ -8,7 +8,7 @@ test('WordPressClient attaches bot secret and reads room registry', async () => 
     baseUrl: 'https://example.com/',
     botSecret: 'shared',
     fetchImpl: async (url, options) => {
-      assert.equal(url, 'https://example.com/wp-json/beeper-comments/v1/rooms');
+      assert.equal(url, 'https://example.com/wp-json/hello/v1/rooms');
       requestBody = JSON.parse(options.body);
       return {
         ok: true,

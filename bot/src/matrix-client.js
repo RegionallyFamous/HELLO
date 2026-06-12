@@ -41,7 +41,7 @@ export class MatrixClient {
         this.nextBatch = sync.next_batch || this.nextBatch;
         await this.save();
       } catch (error) {
-        console.error('[beeper-comments] Matrix sync failed', error);
+        console.error('[hello] Matrix sync failed', error);
         await delay(5000);
       }
     }
@@ -100,9 +100,9 @@ export class MatrixClient {
     for (const roomId of Object.keys(invites)) {
       try {
         await this.request('POST', `/_matrix/client/v3/rooms/${encodeURIComponent(roomId)}/join`, {});
-        console.log(`[beeper-comments] joined invited room ${roomId}`);
+        console.log(`[hello] joined invited room ${roomId}`);
       } catch (error) {
-        console.error(`[beeper-comments] failed to join invited room ${roomId}`, error);
+        console.error(`[hello] failed to join invited room ${roomId}`, error);
       }
     }
   }

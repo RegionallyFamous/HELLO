@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace BeeperComments;
+namespace Hello;
 
 class Gravatar
 {

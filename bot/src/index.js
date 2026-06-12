@@ -23,12 +23,12 @@ await identityStore.load();
 await refreshPostRooms();
 setInterval(refreshPostRooms, config.roomRefreshMs).unref();
 
-console.log('[beeper-comments] Matrix bot started');
+console.log('[hello] Matrix bot started');
 await client.start(async (roomId, event) => {
   try {
     await handleRoomEvent(roomId, event);
   } catch (error) {
-    console.error('[beeper-comments] event handler failed', error);
+    console.error('[hello] event handler failed', error);
   }
 });
 
@@ -36,9 +36,9 @@ async function refreshPostRooms() {
   try {
     const rooms = await wordpress.getRooms();
     postRooms = new Map(rooms.map((room) => [room.room_id, room]));
-    console.log(`[beeper-comments] loaded ${postRooms.size} WordPress post rooms`);
+    console.log(`[hello] loaded ${postRooms.size} WordPress post rooms`);
   } catch (error) {
-    console.error('[beeper-comments] failed to refresh WordPress room registry', error);
+    console.error('[hello] failed to refresh WordPress room registry', error);
   }
 }
 
@@ -118,7 +118,7 @@ async function handleMembershipEvent(roomId, event) {
 
   if (['ban', 'leave'].includes(event.content.membership) && event.sender !== affectedUser) {
     await identityStore.markModerated(affectedUser);
-    console.log(`[beeper-comments] marked ${affectedUser} as moderated after ${event.content.membership} in ${roomId}`);
+    console.log(`[hello] marked ${affectedUser} as moderated after ${event.content.membership} in ${roomId}`);
   }
 }
 

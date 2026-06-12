@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace BeeperComments;
+namespace Hello;
 
 use WP_Comment;
 use WP_Error;
@@ -31,7 +31,7 @@ class Comment_Sync
         add_action('comment_form_after', [$this, 'render_join_button']);
         add_action('wp_enqueue_scripts', [$this, 'enqueue_assets']);
         add_action('add_meta_boxes', [$this, 'register_post_metabox']);
-        add_action('admin_post_beeper_comments_create_room', [$this, 'handle_admin_create_room']);
+        add_action('admin_post_hello_create_room', [$this, 'handle_admin_create_room']);
     }
 
     public function enqueue_assets(): void
@@ -41,18 +41,18 @@ class Comment_Sync
         }
 
         wp_enqueue_script(
-            'beeper-comments-join-button',
-            BEEPER_COMMENTS_URL . 'assets/join-button.js',
+            'hello-join-button',
+            HELLO_URL . 'assets/join-button.js',
             [],
-            BEEPER_COMMENTS_VERSION,
+            HELLO_VERSION,
             true
         );
 
         wp_enqueue_style(
-            'beeper-comments-join-button',
-            BEEPER_COMMENTS_URL . 'assets/join-button.css',
+            'hello-join-button',
+            HELLO_URL . 'assets/join-button.css',
             [],
-            BEEPER_COMMENTS_VERSION
+            HELLO_VERSION
         );
     }
 
@@ -78,7 +78,7 @@ class Comment_Sync
         $room = $api->create_room_for_post($post);
 
         if (is_wp_error($room)) {
-            error_log('[Beeper Comments] Failed to create Matrix room for post ' . $post->ID . ': ' . $room->get_error_message());
+            error_log('[HELLO] Failed to create Matrix room for post ' . $post->ID . ': ' . $room->get_error_message());
             update_post_meta($post->ID, self::META_LAST_ERROR, $room->get_error_message());
             return $room;
         }
@@ -95,7 +95,14 @@ class Comment_Sync
 
     public function register_rest_routes(): void
     {
-        register_rest_route('beeper-comments/v1', '/incoming', [
+        foreach (['hello/v1', 'beeper-comments/v1'] as $namespace) {
+            $this->register_routes_for_namespace($namespace);
+        }
+    }
+
+    private function register_routes_for_namespace(string $namespace): void
+    {
+        register_rest_route($namespace, '/incoming', [
             'methods' => 'POST',
             'callback' => [$this, 'handle_incoming_matrix_message'],
             'permission_callback' => '__return_true',
@@ -123,7 +130,7 @@ class Comment_Sync
             ],
         ]);
 
-        register_rest_route('beeper-comments/v1', '/rooms', [
+        register_rest_route($namespace, '/rooms', [
             'methods' => 'POST',
             'callback' => [$this, 'handle_rooms_request'],
             'permission_callback' => '__return_true',
@@ -135,7 +142,7 @@ class Comment_Sync
             ],
         ]);
 
-        register_rest_route('beeper-comments/v1', '/health', [
+        register_rest_route($namespace, '/health', [
             'methods' => 'POST',
             'callback' => [$this, 'handle_health_request'],
             'permission_callback' => '__return_true',
@@ -156,7 +163,7 @@ class Comment_Sync
         }
 
         if (! in_array($this->sync_direction(), ['both', 'matrix_to_wp'], true)) {
-            return new WP_REST_Response(['message' => __('Matrix to WordPress sync is disabled.', 'beeper-comments')], 202);
+            return new WP_REST_Response(['message' => __('Matrix to WordPress sync is disabled.', 'hello')], 202);
         }
 
         $room_id = sanitize_text_field((string) $request->get_param('room_id'));
@@ -173,7 +180,7 @@ class Comment_Sync
 
         $post_id = $this->find_post_id_by_room($room_id);
         if (! $post_id) {
-            return new WP_REST_Response(['message' => __('No WordPress post is mapped to this Matrix room.', 'beeper-comments')], 404);
+            return new WP_REST_Response(['message' => __('No WordPress post is mapped to this Matrix room.', 'hello')], 404);
         }
 
         $matrix_user_id = sanitize_text_field((string) $request->get_param('matrix_user_id'));
@@ -191,13 +198,13 @@ class Comment_Sync
             'comment_content' => $message,
             'comment_type' => 'comment',
             'comment_approved' => $status,
-            'comment_agent' => 'Beeper Comments Matrix Bot',
+            'comment_agent' => 'HELLO Matrix Bot',
             'comment_date' => current_time('mysql'),
             'comment_date_gmt' => current_time('mysql', true),
         ]));
 
         if (! $comment_id) {
-            return new WP_REST_Response(['message' => __('Unable to create WordPress comment.', 'beeper-comments')], 500);
+            return new WP_REST_Response(['message' => __('Unable to create WordPress comment.', 'hello')], 500);
         }
 
         add_comment_meta($comment_id, self::META_ORIGIN, 'matrix', true);
@@ -244,7 +251,7 @@ class Comment_Sync
         $account = $api->get_account();
 
         return new WP_REST_Response([
-            'plugin_version' => BEEPER_COMMENTS_VERSION,
+            'plugin_version' => HELLO_VERSION,
             'wordpress_url' => home_url('/'),
             'matrix_configured' => $api->is_configured(),
             'matrix_account_ok' => ! is_wp_error($account),
@@ -289,8 +296,8 @@ class Comment_Sync
     public function register_post_metabox(): void
     {
         add_meta_box(
-            'beeper-comments-room',
-            __('Beeper Comments', 'beeper-comments'),
+            'hello-room',
+            __('HELLO', 'hello'),
             [$this, 'render_post_metabox'],
             'post',
             'side',
@@ -304,25 +311,25 @@ class Comment_Sync
         $room_alias = (string) get_post_meta($post->ID, self::META_ROOM_ALIAS, true);
         $last_error = (string) get_post_meta($post->ID, self::META_LAST_ERROR, true);
         $create_url = wp_nonce_url(
-            admin_url('admin-post.php?action=beeper_comments_create_room&post_id=' . $post->ID),
-            'beeper_comments_create_room_' . $post->ID
+            admin_url('admin-post.php?action=hello_create_room&post_id=' . $post->ID),
+            'hello_create_room_' . $post->ID
         );
 
         if ($room_id !== '') {
-            echo '<p><strong>' . esc_html__('Room ID', 'beeper-comments') . '</strong><br><code>' . esc_html($room_id) . '</code></p>';
+            echo '<p><strong>' . esc_html__('Room ID', 'hello') . '</strong><br><code>' . esc_html($room_id) . '</code></p>';
         } else {
-            echo '<p>' . esc_html__('No Matrix room is stored for this post yet.', 'beeper-comments') . '</p>';
+            echo '<p>' . esc_html__('No Matrix room is stored for this post yet.', 'hello') . '</p>';
         }
 
         if ($room_alias !== '') {
-            echo '<p><strong>' . esc_html__('Alias', 'beeper-comments') . '</strong><br><code>' . esc_html($room_alias) . '</code></p>';
+            echo '<p><strong>' . esc_html__('Alias', 'hello') . '</strong><br><code>' . esc_html($room_alias) . '</code></p>';
         }
 
         if ($last_error !== '') {
-            echo '<p><strong>' . esc_html__('Last error', 'beeper-comments') . '</strong><br>' . esc_html($last_error) . '</p>';
+            echo '<p><strong>' . esc_html__('Last error', 'hello') . '</strong><br>' . esc_html($last_error) . '</p>';
         }
 
-        echo '<p><a class="button" href="' . esc_url($create_url) . '">' . esc_html__('Create or repair room', 'beeper-comments') . '</a></p>';
+        echo '<p><a class="button" href="' . esc_url($create_url) . '">' . esc_html__('Create or repair room', 'hello') . '</a></p>';
     }
 
     public function handle_admin_create_room(): void
@@ -330,21 +337,21 @@ class Comment_Sync
         $post_id = isset($_GET['post_id']) ? absint($_GET['post_id']) : 0;
 
         if (! $post_id || ! current_user_can('edit_post', $post_id)) {
-            wp_die(esc_html__('You are not allowed to create a Matrix room for this post.', 'beeper-comments'));
+            wp_die(esc_html__('You are not allowed to create a Matrix room for this post.', 'hello'));
         }
 
-        check_admin_referer('beeper_comments_create_room_' . $post_id);
+        check_admin_referer('hello_create_room_' . $post_id);
 
         $post = get_post($post_id);
         if (! $post instanceof WP_Post || $post->post_type !== 'post') {
-            wp_die(esc_html__('Invalid post.', 'beeper-comments'));
+            wp_die(esc_html__('Invalid post.', 'hello'));
         }
 
         $room = $this->create_room_for_post($post);
         $redirect = get_edit_post_link($post_id, 'raw') ?: admin_url('edit.php');
 
         wp_safe_redirect(add_query_arg(
-            'beeper_comments_room',
+            'hello_room',
             is_wp_error($room) ? 'error' : 'created',
             $redirect
         ));
@@ -385,14 +392,14 @@ class Comment_Sync
             return;
         }
 
-        $author = $comment->comment_author ?: __('WordPress commenter', 'beeper-comments');
+        $author = $comment->comment_author ?: __('WordPress commenter', 'hello');
         $content = wp_strip_all_tags((string) $comment->comment_content);
         $message = sprintf("%s via WordPress:\n\n%s", $author, $content);
         $transaction_id = 'wp-comment-' . $comment_id;
 
         $result = (new Matrix_API())->send_room_message($room_id, $message, $transaction_id);
         if (is_wp_error($result)) {
-            error_log('[Beeper Comments] Failed to send comment ' . $comment_id . ' to Matrix: ' . $result->get_error_message());
+            error_log('[HELLO] Failed to send comment ' . $comment_id . ' to Matrix: ' . $result->get_error_message());
             update_post_meta($post_id, self::META_LAST_ERROR, $result->get_error_message());
             return;
         }
@@ -426,16 +433,16 @@ class Comment_Sync
         $matrix_uri = 'matrix:r/' . ltrim($matrix_target, '#!');
         $web_uri = 'https://matrix.to/#/' . rawurlencode($matrix_target);
         ?>
-        <div class="beeper-comments-join">
+        <div class="hello-join">
             <a
                 href="<?php echo esc_url($matrix_uri, ['matrix']); ?>"
                 class="beeper-join-btn"
                 data-matrix-uri="<?php echo esc_attr($matrix_uri); ?>"
                 data-web-uri="<?php echo esc_url($web_uri); ?>"
-            ><?php esc_html_e('Join the discussion in Beeper', 'beeper-comments'); ?></a>
-            <p class="beeper-comments-hint">
-                <?php esc_html_e('Opens in Beeper or any Matrix client. Messages appear here as comments.', 'beeper-comments'); ?>
-                <a href="<?php echo esc_url($web_uri); ?>"><?php esc_html_e('Open on matrix.to', 'beeper-comments'); ?></a>
+            ><?php esc_html_e('Join the discussion in Beeper', 'hello'); ?></a>
+            <p class="hello-hint">
+                <?php esc_html_e('Opens in Beeper or any Matrix client. Messages appear here as comments.', 'hello'); ?>
+                <a href="<?php echo esc_url($web_uri); ?>"><?php esc_html_e('Open on matrix.to', 'hello'); ?></a>
             </p>
         </div>
         <?php
@@ -451,7 +458,7 @@ class Comment_Sync
     {
         $secret = (string) get_option('beeper_comments_bot_secret', '');
         if ($secret === '' || ! hash_equals($secret, (string) $request->get_param('bot_secret'))) {
-            return new WP_REST_Response(['message' => __('Invalid bot secret.', 'beeper-comments')], 403);
+            return new WP_REST_Response(['message' => __('Invalid bot secret.', 'hello')], 403);
         }
 
         return null;
@@ -518,11 +525,11 @@ class Comment_Sync
             return;
         }
 
-        $reason = sprintf(__('WordPress comment marked as %s.', 'beeper-comments'), $status);
+        $reason = sprintf(__('WordPress comment marked as %s.', 'hello'), $status);
         $result = (new Matrix_API())->redact_event($room_id, $event_id, $reason, 'wp-redact-comment-' . (int) $comment->comment_ID);
 
         if (is_wp_error($result)) {
-            error_log('[Beeper Comments] Failed to redact Matrix event for comment ' . (int) $comment->comment_ID . ': ' . $result->get_error_message());
+            error_log('[HELLO] Failed to redact Matrix event for comment ' . (int) $comment->comment_ID . ': ' . $result->get_error_message());
             update_post_meta((int) $comment->comment_post_ID, self::META_LAST_ERROR, $result->get_error_message());
             return;
         }

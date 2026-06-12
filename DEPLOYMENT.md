@@ -1,4 +1,4 @@
-# Beeper Comments Deployment
+# HELLO Deployment
 
 This runbook assumes a normal WordPress install and a Matrix bot account on the homeserver you want to use.
 
@@ -10,9 +10,9 @@ Build the plugin zip:
 npm run package:plugin
 ```
 
-Install `dist/beeper-comments.zip` in WordPress, or copy `beeper-comments/` into `wp-content/plugins/`.
+Install `dist/hello.zip` in WordPress, or copy `hello/` into `wp-content/plugins/`.
 
-Activate **Beeper Comments**, then open **Settings > Beeper Comments**.
+Activate **HELLO**, then open **Settings > HELLO**.
 
 ## 2. Configure Matrix
 
@@ -34,6 +34,8 @@ In WordPress settings, fill in:
 - moderation redaction behavior
 
 The settings page includes a copyable `.env` block for the bot.
+
+The primary REST namespace is `/wp-json/hello/v1`. The previous `/wp-json/beeper-comments/v1` namespace is still registered as a compatibility alias.
 
 ## 3. Run The Bot
 
@@ -61,13 +63,13 @@ For production, run it under a process manager such as systemd, launchd, PM2, or
 
 ```ini
 [Unit]
-Description=Beeper Comments Matrix Bot
+Description=HELLO Matrix Bot
 After=network.target
 
 [Service]
 Type=simple
-WorkingDirectory=/srv/beeper-comments/bot
-EnvironmentFile=/srv/beeper-comments/bot/.env
+WorkingDirectory=/srv/hello/bot
+EnvironmentFile=/srv/hello/bot/.env
 ExecStart=/usr/bin/node src/index.js
 Restart=always
 RestartSec=5
@@ -80,7 +82,7 @@ WantedBy=multi-user.target
 ## 5. Smoke Test
 
 1. Publish a new WordPress post.
-2. Confirm the post edit screen shows a Matrix room in the **Beeper Comments** metabox.
+2. Confirm the post edit screen shows a Matrix room in the **HELLO** metabox.
 3. Open the public post and click **Join the discussion in Beeper**.
 4. Send a Matrix message in the room.
 5. Confirm the message appears as a WordPress comment.

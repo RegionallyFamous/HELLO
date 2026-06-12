@@ -7,7 +7,7 @@
 
       window.setTimeout(() => {
         if (document.visibilityState === 'visible' && webUri) {
-          const fallback = button.closest('.beeper-comments-join')?.querySelector('.beeper-comments-hint a');
+          const fallback = button.closest('.hello-join')?.querySelector('.hello-hint a');
           fallback?.focus();
         }
       }, 900);

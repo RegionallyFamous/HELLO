@@ -1,4 +1,4 @@
-=== Beeper Comments ===
+=== HELLO ===
 Contributors: hello
 Requires at least: 6.2
 Requires PHP: 8.0
@@ -9,20 +9,20 @@ Turns WordPress post comments into Matrix rooms that can be opened in Beeper.
 
 == Description ==
 
-Beeper Comments creates a Matrix room when a post is published, adds a join button to the comment form, accepts Matrix messages through a secured REST webhook, and syncs approved WordPress comments back to the Matrix room.
+HELLO creates a Matrix room when a post is published, adds a join button to the comment form, accepts Matrix messages through a secured REST webhook, and syncs approved WordPress comments back to the Matrix room.
 
 The companion Node bot listens to Matrix rooms and calls the plugin webhook when readers send messages.
 
 == Installation ==
 
-1. Upload the `beeper-comments` folder to `/wp-content/plugins/`.
+1. Upload the `hello` folder to `/wp-content/plugins/`.
 2. Activate the plugin.
-3. Configure Settings > Beeper Comments.
+3. Configure Settings > HELLO.
 4. Run the companion bot from the repository `bot` directory.
 
 == REST Endpoint ==
 
-`POST /wp-json/beeper-comments/v1/incoming`
+`POST /wp-json/hello/v1/incoming`
 
 Required fields: `room_id`, `matrix_user_id`, `message`, `event_id`, `bot_secret`.
 

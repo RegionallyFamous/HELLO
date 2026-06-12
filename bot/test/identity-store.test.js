@@ -6,7 +6,7 @@ import { tmpdir } from 'node:os';
 import { IdentityStore } from '../src/identity-store.js';
 
 test('IdentityStore persists identities, DM room mappings, onboarding, and moderation', async () => {
-  const dir = await mkdtemp(join(tmpdir(), 'beeper-comments-'));
+  const dir = await mkdtemp(join(tmpdir(), 'hello-'));
   const path = join(dir, 'identities.json');
 
   try {
