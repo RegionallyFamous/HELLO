@@ -1,0 +1,14 @@
+{
+  "name": "hello-beeper-comments",
+  "version": "0.1.0",
+  "private": true,
+  "description": "WordPress + Matrix/Beeper comment sync plugin and bot.",
+  "scripts": {
+    "check": "npm run check:php && npm --prefix bot run check",
+    "check:php": "find beeper-comments -name '*.php' -print0 | xargs -0 -n1 php -l",
+    "package:plugin": "mkdir -p dist && rm -f dist/beeper-comments.zip && cd beeper-comments && zip -qr ../dist/beeper-comments.zip ."
+  },
+  "workspaces": [
+    "bot"
+  ]
+}

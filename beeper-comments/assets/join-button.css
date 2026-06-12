@@ -1,0 +1,34 @@
+.beeper-comments-join {
+  margin-block: 1.5rem;
+}
+
+.beeper-join-btn {
+  display: inline-flex;
+  align-items: center;
+  min-height: 2.75rem;
+  padding: 0.65rem 1rem;
+  border-radius: 6px;
+  background: #111827;
+  color: #ffffff;
+  font-weight: 700;
+  line-height: 1.2;
+  text-decoration: none;
+}
+
+.beeper-join-btn:hover,
+.beeper-join-btn:focus {
+  background: #2563eb;
+  color: #ffffff;
+}
+
+.beeper-comments-hint {
+  max-width: 36rem;
+  margin: 0.65rem 0 0;
+  color: #4b5563;
+  font-size: 0.9375rem;
+  line-height: 1.5;
+}
+
+.beeper-comments-hint a {
+  white-space: nowrap;
+}
