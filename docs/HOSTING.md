@@ -44,6 +44,18 @@ railway variable set MATRIX_SYNC_STORE_PATH=/data/matrix-sync.json --skip-deploy
 railway variable set SITE_REGISTRY_PATH=/data/sites.json --skip-deploys
 ```
 
+Or use the Matrix login API helper to log in an existing bot account and store the Matrix variables in Railway without printing the access token:
+
+```sh
+read -s MATRIX_PASSWORD
+printf '%s' "$MATRIX_PASSWORD" | npm --prefix bot run matrix:login -- \
+  --user hello-bot \
+  --railway \
+  --service bridge \
+  --password-stdin
+unset MATRIX_PASSWORD
+```
+
 Redeploy after variables are in place:
 
 ```sh

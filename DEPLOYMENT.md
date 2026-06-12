@@ -25,6 +25,16 @@ MATRIX_SYNC_STORE_PATH=.data/matrix-sync.json
 SITE_REGISTRY_PATH=.data/sites.json
 ```
 
+You can get `MATRIX_USER_ID` and `MATRIX_ACCESS_TOKEN` for an existing bot account with the Matrix login API helper:
+
+```sh
+read -s MATRIX_PASSWORD
+printf '%s' "$MATRIX_PASSWORD" | npm --prefix bot run matrix:login -- \
+  --user hello-bot \
+  --password-stdin
+unset MATRIX_PASSWORD
+```
+
 Start the bridge:
 
 ```sh
