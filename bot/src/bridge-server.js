@@ -1,4 +1,5 @@
 import http from 'node:http';
+import { randomBytes } from 'node:crypto';
 
 export class BridgeServer {
   constructor({ token, matrix, registry }) {
@@ -31,24 +32,30 @@ export class BridgeServer {
       return;
     }
 
-    if (path === '/v1/health') {
-      await this.requireAuth(request);
-      const account = await this.matrix.getAccount();
-      this.sendJson(response, 200, {
-        ok: true,
-        matrix_user_id: account.user_id || '',
-        known_room_count: this.registry.allRooms().length
-      });
-      return;
-    }
-
     if (request.method !== 'POST') {
       this.sendJson(response, 405, { error: 'Method not allowed' });
       return;
     }
 
-    await this.requireAuth(request);
     const body = await this.readJson(request);
+
+    if (path === '/v1/sites') {
+      await this.registerSite(response, body);
+      return;
+    }
+
+    await this.requireAuth(request, body);
+
+    if (path === '/v1/health') {
+      const account = await this.matrix.getAccount();
+      this.sendJson(response, 200, {
+        ok: true,
+        matrix_user_id: account.user_id || '',
+        known_site_count: this.registry.allSites?.().length || 0,
+        known_room_count: this.registry.allRooms().length
+      });
+      return;
+    }
 
     if (path === '/v1/rooms') {
       await this.createRoom(response, body);
@@ -68,9 +75,39 @@ export class BridgeServer {
     this.sendJson(response, 404, { error: 'Not found' });
   }
 
+  async registerSite(response, body) {
+    this.requireSite(body.site);
+    this.requireString(body.site.site_id, 'site.site_id');
+
+    const existing = this.registry.getSiteForPayload(body.site);
+    const bridgeToken = existing?.bridgeToken || randomBytes(32).toString('hex');
+    const site = await this.registry.upsertSite({
+      siteId: body.site.site_id,
+      siteUrl: body.site.url,
+      siteName: body.site.name || '',
+      restUrl: body.site.rest_url || '',
+      incomingUrl: body.site.incoming_url,
+      webhookSecret: body.site.webhook_secret,
+      bridgeToken
+    });
+
+    this.sendJson(response, 201, {
+      site_id: site.siteId,
+      bridge_token: site.bridgeToken
+    });
+  }
+
   async createRoom(response, body) {
     this.requireSite(body.site);
     this.requirePost(body.post);
+    await this.registry.upsertSite({
+      siteId: body.site.site_id || this.siteIdFromUrl(body.site.url),
+      siteUrl: body.site.url,
+      siteName: body.site.name || '',
+      restUrl: body.site.rest_url || '',
+      incomingUrl: body.site.incoming_url,
+      webhookSecret: body.site.webhook_secret
+    });
 
     const room = await this.matrix.createPublicPostRoom({
       name: String(body.room?.name || `Comments: ${body.post.title}`),
@@ -81,6 +118,7 @@ export class BridgeServer {
     await this.registry.upsertRoom({
       roomId: room.room_id,
       roomAlias: room.room_alias || '',
+      siteId: body.site.site_id || '',
       siteUrl: body.site.url,
       siteName: body.site.name || '',
       incomingUrl: body.site.incoming_url,
@@ -124,9 +162,18 @@ export class BridgeServer {
     this.sendJson(response, 200, result);
   }
 
-  async requireAuth(request) {
+  async requireAuth(request, body = {}) {
     const expected = `Bearer ${this.token}`;
-    if (!this.token || request.headers.authorization !== expected) {
+    if (this.token && request.headers.authorization === expected) {
+      return;
+    }
+
+    const site = this.registry.getSiteForPayload?.(body.site);
+    if (site?.bridgeToken && request.headers.authorization === `Bearer ${site.bridgeToken}`) {
+      return;
+    }
+
+    {
       const error = new Error('Unauthorized');
       error.status = 401;
       throw error;
@@ -141,6 +188,10 @@ export class BridgeServer {
     this.requireString(site.url, 'site.url');
     this.requireString(site.incoming_url, 'site.incoming_url');
     this.requireString(site.webhook_secret, 'site.webhook_secret');
+  }
+
+  siteIdFromUrl(siteUrl) {
+    return `url:${Buffer.from(siteUrl).toString('base64url')}`;
   }
 
   requirePost(post) {

@@ -14,13 +14,46 @@ class Bridge_API
 
     public function __construct()
     {
-        $this->bridge_url = rtrim((string) get_option('hello_bridge_url', ''), '/');
+        $bridge_url = defined('HELLO_BRIDGE_URL') ? (string) constant('HELLO_BRIDGE_URL') : (string) get_option('hello_bridge_url', '');
+        $this->bridge_url = rtrim($bridge_url ?: HELLO_DEFAULT_BRIDGE_URL, '/');
         $this->bridge_token = (string) get_option('hello_bridge_token', '');
     }
 
     public function is_configured(): bool
     {
-        return $this->bridge_url !== '' && $this->bridge_token !== '';
+        return $this->bridge_url !== '';
+    }
+
+    /**
+     * @return array{site_id: string, bridge_token: string}|WP_Error
+     */
+    public function register_site()
+    {
+        if (! $this->is_configured()) {
+            return new WP_Error('hello_bridge_not_configured', __('HELLO Bridge URL is required.', 'hello'));
+        }
+
+        $response = $this->request('POST', '/v1/sites', [
+            'site' => $this->site_payload(),
+        ], false);
+
+        if (is_wp_error($response)) {
+            return $response;
+        }
+
+        if (empty($response['bridge_token']) || ! is_string($response['bridge_token'])) {
+            return new WP_Error('hello_bridge_missing_site_token', __('Bridge did not return a site token.', 'hello'));
+        }
+
+        $this->bridge_token = sanitize_text_field($response['bridge_token']);
+        update_option('hello_bridge_token', $this->bridge_token);
+
+        return [
+            'site_id' => isset($response['site_id']) && is_string($response['site_id'])
+                ? sanitize_text_field($response['site_id'])
+                : $this->site_id(),
+            'bridge_token' => $this->bridge_token,
+        ];
     }
 
     /**
@@ -28,8 +61,9 @@ class Bridge_API
      */
     public function create_room_for_post(WP_Post $post)
     {
-        if (! $this->is_configured()) {
-            return new WP_Error('hello_bridge_not_configured', __('Bridge URL and token are required.', 'hello'));
+        $registered = $this->ensure_registered();
+        if (is_wp_error($registered)) {
+            return $registered;
         }
 
         $response = $this->request('POST', '/v1/rooms', [
@@ -70,8 +104,9 @@ class Bridge_API
      */
     public function send_room_message(string $room_id, string $message, string $transaction_id, int $post_id = 0, int $comment_id = 0, string $author = '')
     {
-        if (! $this->is_configured()) {
-            return new WP_Error('hello_bridge_not_configured', __('Bridge URL and token are required.', 'hello'));
+        $registered = $this->ensure_registered();
+        if (is_wp_error($registered)) {
+            return $registered;
         }
 
         return $this->request('POST', '/v1/comments', [
@@ -90,8 +125,9 @@ class Bridge_API
      */
     public function redact_event(string $room_id, string $event_id, string $reason, string $transaction_id)
     {
-        if (! $this->is_configured()) {
-            return new WP_Error('hello_bridge_not_configured', __('Bridge URL and token are required.', 'hello'));
+        $registered = $this->ensure_registered();
+        if (is_wp_error($registered)) {
+            return $registered;
         }
 
         return $this->request('POST', '/v1/redactions', [
@@ -108,8 +144,9 @@ class Bridge_API
      */
     public function get_status()
     {
-        if (! $this->is_configured()) {
-            return new WP_Error('hello_bridge_not_configured', __('Bridge URL and token are required.', 'hello'));
+        $registered = $this->ensure_registered();
+        if (is_wp_error($registered)) {
+            return $registered;
         }
 
         return $this->request('POST', '/v1/health', [
@@ -123,12 +160,37 @@ class Bridge_API
     private function site_payload(): array
     {
         return [
+            'site_id' => $this->site_id(),
             'url' => home_url('/'),
             'name' => get_bloginfo('name'),
             'rest_url' => rest_url('hello/v1/'),
             'incoming_url' => rest_url('hello/v1/incoming'),
             'webhook_secret' => (string) get_option('hello_bot_secret', ''),
         ];
+    }
+
+    /**
+     * @return true|WP_Error
+     */
+    private function ensure_registered()
+    {
+        if ($this->bridge_token !== '') {
+            return true;
+        }
+
+        $registered = $this->register_site();
+        return is_wp_error($registered) ? $registered : true;
+    }
+
+    private function site_id(): string
+    {
+        $site_id = (string) get_option('hello_site_id', '');
+        if ($site_id === '') {
+            $site_id = wp_generate_uuid4();
+            update_option('hello_site_id', $site_id);
+        }
+
+        return $site_id;
     }
 
     private function room_alias_name(WP_Post $post): string
@@ -143,15 +205,24 @@ class Bridge_API
      * @param array<string, mixed> $body
      * @return array<string, mixed>|WP_Error
      */
-    private function request(string $method, string $path, array $body = [])
+    private function request(string $method, string $path, array $body = [], bool $authenticated = true)
     {
+        $headers = [
+            'Content-Type' => 'application/json',
+        ];
+
+        if ($authenticated) {
+            if ($this->bridge_token === '') {
+                return new WP_Error('hello_bridge_not_registered', __('HELLO site registration is required.', 'hello'));
+            }
+
+            $headers['Authorization'] = 'Bearer ' . $this->bridge_token;
+        }
+
         $response = wp_remote_request($this->bridge_url . $path, [
             'method' => $method,
             'timeout' => 15,
-            'headers' => [
-                'Authorization' => 'Bearer ' . $this->bridge_token,
-                'Content-Type' => 'application/json',
-            ],
+            'headers' => $headers,
             'body' => wp_json_encode($body),
         ]);
 

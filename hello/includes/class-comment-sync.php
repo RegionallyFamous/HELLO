@@ -23,6 +23,8 @@ class Comment_Sync
     public const META_MATRIX_REDACTED = '_hello_matrix_redacted';
     public const META_LAST_ERROR = '_hello_last_error';
 
+    private bool $importing_matrix_comment = false;
+
     public function boot(): void
     {
         add_action('transition_post_status', [$this, 'maybe_create_room_on_publish'], 10, 3);
@@ -221,36 +223,48 @@ class Comment_Sync
         $moderation_state = sanitize_key((string) $request->get_param('moderation_state'));
         $status = $moderation_state === 'hold' || get_option('comment_moderation') ? '0' : '1';
 
-        $comment_id = wp_insert_comment(wp_slash([
-            'comment_post_ID' => $post_id,
-            'comment_author' => $author_name,
-            'comment_author_email' => '',
-            'comment_author_url' => $author_url,
-            'comment_content' => $message,
-            'comment_type' => 'comment',
-            'comment_approved' => $status,
-            'comment_agent' => 'HELLO Matrix Bot',
-            'comment_date' => current_time('mysql'),
-            'comment_date_gmt' => current_time('mysql', true),
-        ]));
-
-        if (! $comment_id) {
-            return new WP_REST_Response(['message' => __('Unable to create WordPress comment.', 'hello')], 500);
-        }
-
-        add_comment_meta($comment_id, self::META_ORIGIN, 'matrix', true);
-        add_comment_meta($comment_id, self::META_SYNCED, '1', true);
-        add_comment_meta($comment_id, self::META_MATRIX_ID, $matrix_user_id, true);
-        add_comment_meta($comment_id, self::META_EVENT_ID, $event_id, true);
+        $comment_meta = [
+            self::META_ORIGIN => 'matrix',
+            self::META_SYNCED => '1',
+            self::META_MATRIX_ID => $matrix_user_id,
+            self::META_EVENT_ID => $event_id,
+        ];
 
         $hash = Gravatar::sanitize_hash((string) $request->get_param('author_email_hash'));
         if ($hash !== '') {
-            add_comment_meta($comment_id, '_hello_gravatar_hash', $hash, true);
+            $comment_meta['_hello_gravatar_hash'] = $hash;
         }
 
         $avatar_url = esc_url_raw((string) $request->get_param('author_avatar_url'));
         if ($avatar_url !== '') {
-            add_comment_meta($comment_id, '_hello_gravatar_avatar_url', $avatar_url, true);
+            $comment_meta['_hello_gravatar_avatar_url'] = $avatar_url;
+        }
+
+        $this->importing_matrix_comment = true;
+        try {
+            $comment_id = wp_new_comment(wp_slash([
+                'comment_post_ID' => $post_id,
+                'comment_author' => $author_name,
+                'comment_author_email' => '',
+                'comment_author_url' => $author_url,
+                'comment_content' => $message,
+                'comment_type' => 'comment',
+                'comment_approved' => $status,
+                'comment_agent' => 'HELLO Matrix Bot',
+                'comment_date' => current_time('mysql'),
+                'comment_date_gmt' => current_time('mysql', true),
+                'comment_meta' => $comment_meta,
+            ]), true);
+        } finally {
+            $this->importing_matrix_comment = false;
+        }
+
+        if (is_wp_error($comment_id)) {
+            return new WP_REST_Response(['message' => $comment_id->get_error_message()], 500);
+        }
+
+        if (! $comment_id) {
+            return new WP_REST_Response(['message' => __('Unable to create WordPress comment.', 'hello')], 500);
         }
 
         return new WP_REST_Response([
@@ -273,12 +287,12 @@ class Comment_Sync
         unset($request);
 
         $api = $this->transport();
-        $account = $api instanceof Bridge_API ? $api->get_status() : $api->get_account();
+        $account = $api->get_status();
 
         return new WP_REST_Response([
             'plugin_version' => HELLO_VERSION,
             'wordpress_url' => home_url('/'),
-            'connection_mode' => $this->connection_mode(),
+            'connection_mode' => 'hosted_bridge',
             'transport_configured' => $api->is_configured(),
             'transport_ok' => ! is_wp_error($account),
             'transport_status' => is_wp_error($account) ? null : $account,
@@ -291,6 +305,10 @@ class Comment_Sync
     public function sync_wordpress_comment_to_matrix(int $comment_id, $comment_approved, array $comment_data): void
     {
         unset($comment_data);
+
+        if ($this->importing_matrix_comment) {
+            return;
+        }
 
         if (! in_array($this->sync_direction(), ['both', 'wp_to_matrix'], true)) {
             return;
@@ -480,18 +498,9 @@ class Comment_Sync
         return in_array($direction, ['both', 'matrix_to_wp', 'wp_to_matrix'], true) ? $direction : 'both';
     }
 
-    private function connection_mode(): string
+    private function transport(): Bridge_API
     {
-        $mode = (string) get_option('hello_connection_mode', 'bridge');
-        return in_array($mode, ['bridge', 'direct_matrix'], true) ? $mode : 'bridge';
-    }
-
-    /**
-     * @return Bridge_API|Matrix_API
-     */
-    private function transport()
-    {
-        return $this->connection_mode() === 'direct_matrix' ? new Matrix_API() : new Bridge_API();
+        return new Bridge_API();
     }
 
     /**

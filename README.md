@@ -11,7 +11,7 @@ HELLO is a WordPress plugin plus a hosted bridge service that turns a post comme
 
 ## Feature Coverage
 
-- Lets a WordPress site use a hosted HELLO Bridge, so customer sites only need the plugin.
+- Lets a WordPress site use Nick's hosted HELLO Bridge, so customer sites only need the plugin.
 - Creates a Matrix room through the bridge when a WordPress post is published.
 - Adds a Beeper/Matrix join button below the comment form.
 - Exposes secured REST endpoints for incoming Matrix messages, room registry, and health checks.
@@ -29,12 +29,8 @@ HELLO is a WordPress plugin plus a hosted bridge service that turns a post comme
 
 1. Copy or symlink `hello/` into `wp-content/plugins/`.
 2. Activate **HELLO** in WordPress.
-3. Open **Settings > HELLO** and set:
-   - Connection mode: `Hosted bridge`
-   - Bridge URL
-   - Bridge token
-4. On your bridge server, create a bot `.env` from `bot/.env.example`.
-5. Run the bridge:
+3. On your bridge server, create a bot `.env` from `bot/.env.example`.
+4. Run the bridge:
 
 ```sh
 cd bot
@@ -42,7 +38,7 @@ npm install
 npm start
 ```
 
-When a post is published, the plugin asks your hosted bridge to create a Matrix room and stores the returned room ID on the post. The comment form gets a Beeper/Matrix join button. The bridge listens to mapped Matrix rooms and posts messages back through each site’s plugin webhook. Normal approved WordPress comments are sent from the plugin to the bridge, then into Matrix.
+When a post is published, the plugin registers with Nick's hosted bridge, asks it to create a Matrix room, and stores the returned room ID on the post. The comment form gets a Beeper/Matrix join button. The bridge listens to mapped Matrix rooms and posts messages back through each site’s plugin webhook. Normal approved WordPress comments are sent from the plugin to the bridge, then into Matrix.
 
 ## Development
 

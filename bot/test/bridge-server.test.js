@@ -40,8 +40,60 @@ test('BridgeServer exposes an unauthenticated liveness endpoint', async () => {
   }
 });
 
+test('BridgeServer registers a site and returns a per-site token', async () => {
+  let savedSite = null;
+  const server = new BridgeServer({
+    token: 'secret',
+    matrix: {},
+    registry: {
+      getSiteForPayload: () => null,
+      upsertSite: async (site) => {
+        savedSite = site;
+        return site;
+      },
+      allRooms: () => [],
+      allSites: () => savedSite ? [savedSite] : []
+    }
+  }).listen(0);
+
+  try {
+    const { port } = server.address();
+    const response = await fetch(`http://127.0.0.1:${port}/v1/sites`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        site: {
+          site_id: 'site-1',
+          url: 'https://example.com',
+          name: 'Example',
+          rest_url: 'https://example.com/wp-json/hello/v1/',
+          incoming_url: 'https://example.com/wp-json/hello/v1/incoming',
+          webhook_secret: 'wp-secret'
+        }
+      })
+    });
+    const body = await response.json();
+
+    assert.equal(response.status, 201);
+    assert.equal(body.site_id, 'site-1');
+    assert.match(body.bridge_token, /^[a-f0-9]{64}$/);
+    assert.equal(savedSite.siteUrl, 'https://example.com');
+  } finally {
+    server.close();
+  }
+});
+
 test('BridgeServer creates a Matrix room and persists mapping', async () => {
   const saved = [];
+  const sites = new Map([
+    ['site-1', {
+      siteId: 'site-1',
+      siteUrl: 'https://example.com',
+      bridgeToken: 'site-token'
+    }]
+  ]);
   const server = new BridgeServer({
     token: 'secret',
     matrix: {
@@ -56,8 +108,17 @@ test('BridgeServer creates a Matrix room and persists mapping', async () => {
       }
     },
     registry: {
+      getSiteForPayload: (site) => sites.get(site.site_id) || null,
+      upsertSite: async (site) => {
+        sites.set(site.siteId, {
+          ...sites.get(site.siteId),
+          ...site
+        });
+        return sites.get(site.siteId);
+      },
       upsertRoom: async (room) => saved.push(room),
-      allRooms: () => saved
+      allRooms: () => saved,
+      allSites: () => Array.from(sites.values())
     }
   }).listen(0);
 
@@ -66,11 +127,12 @@ test('BridgeServer creates a Matrix room and persists mapping', async () => {
     const response = await fetch(`http://127.0.0.1:${port}/v1/rooms`, {
       method: 'POST',
       headers: {
-        Authorization: 'Bearer secret',
+        Authorization: 'Bearer site-token',
         'Content-Type': 'application/json'
       },
       body: JSON.stringify({
         site: {
+          site_id: 'site-1',
           url: 'https://example.com',
           name: 'Example',
           incoming_url: 'https://example.com/wp-json/hello/v1/incoming',
@@ -92,6 +154,7 @@ test('BridgeServer creates a Matrix room and persists mapping', async () => {
 
     assert.equal(response.status, 201);
     assert.equal(body.room_id, '!room:matrix.org');
+    assert.equal(saved[0].siteId, 'site-1');
     assert.equal(saved[0].incomingUrl, 'https://example.com/wp-json/hello/v1/incoming');
   } finally {
     server.close();

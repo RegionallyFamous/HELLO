@@ -17,8 +17,8 @@ The companion HELLO Bridge listens to Matrix rooms and calls the plugin webhook 
 
 1. Upload the `hello` folder to `/wp-content/plugins/`.
 2. Activate the plugin.
-3. Configure Settings > HELLO.
-4. Run the companion bot from the repository `bot` directory.
+
+No Matrix account, bot service, bridge URL, or bridge token is configured on the WordPress site. The plugin registers with the hosted HELLO Bridge automatically.
 
 == REST Endpoint ==
 

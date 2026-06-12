@@ -8,14 +8,6 @@ class Admin_Settings
 {
     /** @var array<string, string> */
     private array $settings = [
-        'hello_connection_mode' => 'select',
-        'hello_bridge_url' => 'url',
-        'hello_bridge_token' => 'token',
-        'hello_homeserver' => 'url',
-        'hello_bot_token' => 'token',
-        'hello_bot_user' => 'text',
-        'hello_bot_secret' => 'secret',
-        'hello_room_alias_prefix' => 'text',
         'hello_gravatar_fallback' => 'select',
         'hello_sync_direction' => 'select',
         'hello_redact_on_moderation' => 'checkbox',
@@ -52,30 +44,6 @@ class Admin_Settings
         }
 
         add_settings_section(
-            'hello_bridge',
-            __('Hosted Bridge', 'hello'),
-            fn () => print '<p>' . esc_html__('Use this mode when WordPress sites can only install the HELLO plugin. Your bridge server owns the Matrix bot and relays events.', 'hello') . '</p>',
-            'hello'
-        );
-
-        $this->add_field('hello_connection_mode', __('Connection mode', 'hello'), 'select');
-        $this->add_field('hello_bridge_url', __('Bridge URL', 'hello'), 'url');
-        $this->add_field('hello_bridge_token', __('Bridge token', 'hello'), 'password');
-
-        add_settings_section(
-            'hello_matrix',
-            __('Direct Matrix Connection', 'hello'),
-            fn () => print '<p>' . esc_html__('Use direct Matrix only for self-hosted installs where this WordPress site can hold Matrix bot credentials.', 'hello') . '</p>',
-            'hello'
-        );
-
-        $this->add_field('hello_homeserver', __('Homeserver URL', 'hello'), 'url');
-        $this->add_field('hello_bot_token', __('Bot access token', 'hello'), 'password');
-        $this->add_field('hello_bot_user', __('Bot user ID', 'hello'), 'text');
-        $this->add_field('hello_bot_secret', __('Webhook shared secret', 'hello'), 'password');
-        $this->add_field('hello_room_alias_prefix', __('Room alias prefix', 'hello'), 'text');
-
-        add_settings_section(
             'hello_behavior',
             __('Sync Behavior', 'hello'),
             '__return_empty_string',
@@ -109,18 +77,6 @@ class Admin_Settings
 
     public function sanitize_setting(string $value, string $option): string
     {
-        if ($option === 'hello_homeserver') {
-            return esc_url_raw(rtrim($value, '/'));
-        }
-
-        if ($option === 'hello_bridge_url') {
-            return esc_url_raw(rtrim($value, '/'));
-        }
-
-        if ($option === 'hello_connection_mode') {
-            return in_array($value, ['bridge', 'direct_matrix'], true) ? $value : 'bridge';
-        }
-
         if ($option === 'hello_sync_direction') {
             return in_array($value, ['both', 'matrix_to_wp', 'wp_to_matrix'], true) ? $value : 'both';
         }
@@ -161,15 +117,6 @@ class Admin_Settings
             return;
         }
 
-        if ($option === 'hello_connection_mode') {
-            $choices = [
-                'bridge' => __('Hosted bridge', 'hello'),
-                'direct_matrix' => __('Direct Matrix', 'hello'),
-            ];
-            $this->render_select($option, $value, $choices);
-            return;
-        }
-
         if ($option === 'hello_gravatar_fallback') {
             $choices = [
                 'matrix_display_name' => __('Use Matrix display name', 'hello'),
@@ -196,13 +143,6 @@ class Admin_Settings
             esc_attr($value)
         );
 
-        if ($option === 'hello_bot_secret') {
-            echo '<p class="description">' . esc_html__('The bridge uses this secret when it calls back into this WordPress site.', 'hello') . '</p>';
-        }
-
-        if ($option === 'hello_bridge_token') {
-            echo '<p class="description">' . esc_html__('Shared token used by this plugin when it calls your hosted HELLO Bridge.', 'hello') . '</p>';
-        }
     }
 
     /**
@@ -225,14 +165,6 @@ class Admin_Settings
     private function default_for(string $option): string
     {
         $defaults = [
-            'hello_connection_mode' => 'bridge',
-            'hello_bridge_url' => '',
-            'hello_bridge_token' => '',
-            'hello_homeserver' => 'https://matrix.org',
-            'hello_bot_token' => '',
-            'hello_bot_user' => '',
-            'hello_bot_secret' => '',
-            'hello_room_alias_prefix' => 'post-',
             'hello_gravatar_fallback' => 'matrix_display_name',
             'hello_sync_direction' => 'both',
             'hello_redact_on_moderation' => '1',
@@ -243,28 +175,12 @@ class Admin_Settings
 
     private function section_for(string $option): string
     {
-        if (str_starts_with($option, 'hello_bridge') || $option === 'hello_connection_mode') {
-            return 'hello_bridge';
-        }
-
-        if (str_contains($option, 'sync') || str_contains($option, 'gravatar') || str_contains($option, 'redact')) {
-            return 'hello_behavior';
-        }
-
-        return 'hello_matrix';
+        return 'hello_behavior';
     }
 
     private function label_for(string $option): string
     {
         $labels = [
-            'hello_connection_mode' => __('Connection mode', 'hello'),
-            'hello_bridge_url' => __('Bridge URL', 'hello'),
-            'hello_bridge_token' => __('Bridge token', 'hello'),
-            'hello_homeserver' => __('Homeserver URL', 'hello'),
-            'hello_bot_token' => __('Bot access token', 'hello'),
-            'hello_bot_user' => __('Bot user ID', 'hello'),
-            'hello_bot_secret' => __('Webhook shared secret', 'hello'),
-            'hello_room_alias_prefix' => __('Room alias prefix', 'hello'),
             'hello_gravatar_fallback' => __('Gravatar fallback', 'hello'),
             'hello_sync_direction' => __('Sync direction', 'hello'),
             'hello_redact_on_moderation' => __('Redact moderated Matrix messages', 'hello'),
@@ -276,14 +192,6 @@ class Admin_Settings
     private function description_for(string $option): string
     {
         $descriptions = [
-            'hello_connection_mode' => __('Whether HELLO uses your hosted bridge server or talks to Matrix directly.', 'hello'),
-            'hello_bridge_url' => __('Base URL for your hosted HELLO Bridge server.', 'hello'),
-            'hello_bridge_token' => __('Bearer token used to authenticate plugin requests to the bridge.', 'hello'),
-            'hello_homeserver' => __('Matrix homeserver base URL.', 'hello'),
-            'hello_bot_token' => __('Access token for the Matrix bot account.', 'hello'),
-            'hello_bot_user' => __('Matrix user ID for the bot account.', 'hello'),
-            'hello_bot_secret' => __('Shared secret required by HELLO bot REST requests.', 'hello'),
-            'hello_room_alias_prefix' => __('Prefix used when HELLO creates Matrix room aliases.', 'hello'),
             'hello_gravatar_fallback' => __('Identity fallback when no Gravatar profile is available.', 'hello'),
             'hello_sync_direction' => __('Controls whether Matrix, WordPress, or both sides are synced.', 'hello'),
             'hello_redact_on_moderation' => __('Whether Matrix events are redacted when synced comments are spammed or trashed.', 'hello'),
@@ -308,16 +216,25 @@ class Admin_Settings
         ]));
 
         $base = rest_url('hello/v1/');
-        $secret = (string) get_option('hello_bot_secret', '');
-        $mode = (string) get_option('hello_connection_mode', 'bridge');
+        $site_id = (string) get_option('hello_site_id', '');
+        $bridge_url = defined('HELLO_BRIDGE_URL') ? (string) constant('HELLO_BRIDGE_URL') : (string) get_option('hello_bridge_url', HELLO_DEFAULT_BRIDGE_URL);
+        $registered = (string) get_option('hello_bridge_token', '') !== '';
         ?>
         <hr>
         <h2><?php esc_html_e('Connection Status', 'hello'); ?></h2>
         <table class="widefat striped" style="max-width: 760px;">
             <tbody>
                 <tr>
-                    <th scope="row"><?php esc_html_e('Mode', 'hello'); ?></th>
-                    <td><?php echo esc_html($mode === 'direct_matrix' ? __('Direct Matrix', 'hello') : __('Hosted bridge', 'hello')); ?></td>
+                    <th scope="row"><?php esc_html_e('Bridge', 'hello'); ?></th>
+                    <td><code><?php echo esc_html($bridge_url); ?></code></td>
+                </tr>
+                <tr>
+                    <th scope="row"><?php esc_html_e('Site ID', 'hello'); ?></th>
+                    <td><code><?php echo esc_html($site_id); ?></code></td>
+                </tr>
+                <tr>
+                    <th scope="row"><?php esc_html_e('Registered', 'hello'); ?></th>
+                    <td><?php echo esc_html($registered ? __('Yes', 'hello') : __('Not yet', 'hello')); ?></td>
                 </tr>
                 <tr>
                     <th scope="row"><?php esc_html_e('Known post rooms', 'hello'); ?></th>
@@ -337,22 +254,6 @@ class Admin_Settings
                 </tr>
             </tbody>
         </table>
-        <h3><?php esc_html_e('Bridge environment', 'hello'); ?></h3>
-        <textarea readonly rows="7" class="large-text code" style="max-width: 760px;"><?php
-        echo esc_textarea(
-            'MATRIX_HOMESERVER_URL=' . (string) get_option('hello_homeserver', 'https://matrix.org') . "\n" .
-            'MATRIX_ACCESS_TOKEN=' . (string) get_option('hello_bot_token', '') . "\n" .
-            'MATRIX_USER_ID=' . (string) get_option('hello_bot_user', '') . "\n" .
-            'BRIDGE_API_TOKEN=' . (string) get_option('hello_bridge_token', '') . "\n" .
-            'BRIDGE_PORT=8787' . "\n" .
-            'IDENTITY_STORE_PATH=.data/identities.json' . "\n" .
-            'MATRIX_SYNC_STORE_PATH=.data/matrix-sync.json' . "\n" .
-            'SITE_REGISTRY_PATH=.data/sites.json'
-        );
-        ?></textarea>
-        <p class="description">
-            <?php echo esc_html(sprintf(__('Bridge callbacks use this WordPress secret: %s', 'hello'), $secret)); ?>
-        </p>
         <?php
     }
 }

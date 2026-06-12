@@ -14,6 +14,43 @@ Run the bridge as a normal long-running Node service in a container host that su
 
 Good fits are managed container platforms such as Fly.io, Railway, Render, Google Cloud Run with a persistent external store, a VPS with Docker, or Kubernetes. Vercel Functions are not a good fit for the bridge because the Matrix sync loop is intentionally long-running. Cloudflare Containers are promising, but as of June 12, 2026 their container disk is ephemeral when an instance sleeps, so HELLO should only use that path after adding a Cloudflare Durable Object, D1, R2 FUSE, or other persistent state adapter.
 
+## Railway
+
+The repo includes `railway.json` so Railway builds `bot/Dockerfile`, checks `/v1/live`, and restarts the bridge if it exits.
+
+Create the Railway project and service:
+
+```sh
+railway init --name HELLO
+railway add --service bridge
+railway service link bridge
+```
+
+Attach persistent state:
+
+```sh
+railway volume add --mount-path /data
+```
+
+Set runtime variables:
+
+```sh
+railway variable set MATRIX_HOMESERVER_URL=https://matrix.org --skip-deploys
+railway variable set MATRIX_USER_ID=@hello-bot:matrix.org --skip-deploys
+railway variable set MATRIX_ACCESS_TOKEN --stdin --skip-deploys
+railway variable set BRIDGE_API_TOKEN --stdin --skip-deploys
+railway variable set IDENTITY_STORE_PATH=/data/identities.json --skip-deploys
+railway variable set MATRIX_SYNC_STORE_PATH=/data/matrix-sync.json --skip-deploys
+railway variable set SITE_REGISTRY_PATH=/data/sites.json --skip-deploys
+```
+
+Redeploy after variables are in place:
+
+```sh
+railway redeploy
+railway domain --service bridge --port 8787
+```
+
 ## Container Contract
 
 Build the image from the repo root:
@@ -42,7 +79,7 @@ Or use Compose:
 docker compose up --build
 ```
 
-Set the WordPress plugin's **Bridge URL** to the public HTTPS URL that points at this container.
+For Nick's production plugin build, set `HELLO_DEFAULT_BRIDGE_URL` in `hello/hello.php` to the public HTTPS URL that points at this container. Customer WordPress sites do not configure a bridge URL.
 
 ## Required Secrets
 
@@ -68,7 +105,7 @@ SITE_REGISTRY_PATH=/data/sites.json
 ## Health Checks
 
 - `GET /v1/live` is unauthenticated and returns a minimal liveness response for load balancers and container platforms.
-- `GET /v1/health` requires `Authorization: Bearer <BRIDGE_API_TOKEN>` and verifies Matrix account access.
+- `POST /v1/health` requires `Authorization: Bearer <BRIDGE_API_TOKEN>` and verifies Matrix account access.
 
 ## Cloudflare Notes
 
