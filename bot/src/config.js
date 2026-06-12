@@ -32,7 +32,8 @@ export function getConfig() {
     wordpressBaseUrl: (process.env.WORDPRESS_BASE_URL || '').replace(/\/$/, ''),
     wordpressBotSecret: process.env.WORDPRESS_BOT_SECRET || '',
     identityStorePath: process.env.IDENTITY_STORE_PATH || '.data/identities.json',
-    matrixSyncStorePath: process.env.MATRIX_SYNC_STORE_PATH || '.data/matrix-sync.json'
+    matrixSyncStorePath: process.env.MATRIX_SYNC_STORE_PATH || '.data/matrix-sync.json',
+    roomRefreshMs: Number.parseInt(process.env.ROOM_REFRESH_MS || '60000', 10)
   };
 
   const missing = Object.entries({
@@ -44,6 +45,10 @@ export function getConfig() {
 
   if (missing.length) {
     throw new Error(`Missing required environment variables: ${missing.map(([key]) => key).join(', ')}`);
+  }
+
+  if (!Number.isFinite(config.roomRefreshMs) || config.roomRefreshMs < 5000) {
+    throw new Error('ROOM_REFRESH_MS must be at least 5000');
   }
 
   return config;

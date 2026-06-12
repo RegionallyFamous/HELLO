@@ -17,22 +17,49 @@ const wordpress = new WordPressClient({
   baseUrl: config.wordpressBaseUrl,
   botSecret: config.wordpressBotSecret
 });
+let postRooms = new Map();
 
 await identityStore.load();
+await refreshPostRooms();
+setInterval(refreshPostRooms, config.roomRefreshMs).unref();
+
 console.log('[beeper-comments] Matrix bot started');
 await client.start(async (roomId, event) => {
   try {
-    await handleRoomMessage(roomId, event);
+    await handleRoomEvent(roomId, event);
   } catch (error) {
-    console.error('[beeper-comments] message handler failed', error);
+    console.error('[beeper-comments] event handler failed', error);
   }
 });
 
-async function handleRoomMessage(roomId, event) {
+async function refreshPostRooms() {
+  try {
+    const rooms = await wordpress.getRooms();
+    postRooms = new Map(rooms.map((room) => [room.room_id, room]));
+    console.log(`[beeper-comments] loaded ${postRooms.size} WordPress post rooms`);
+  } catch (error) {
+    console.error('[beeper-comments] failed to refresh WordPress room registry', error);
+  }
+}
+
+async function handleRoomEvent(roomId, event) {
   if (!event?.content || event.sender === config.matrixUserId) {
     return;
   }
 
+  if (event.type === 'm.room.member') {
+    await handleMembershipEvent(roomId, event);
+    return;
+  }
+
+  if (event.type !== 'm.room.message') {
+    return;
+  }
+
+  await handleRoomMessage(roomId, event);
+}
+
+async function handleRoomMessage(roomId, event) {
   if (event.content.msgtype !== 'm.text' || !event.content.body) {
     return;
   }
@@ -42,7 +69,15 @@ async function handleRoomMessage(roomId, event) {
     return;
   }
 
-  if (await maybeHandleIdentityReply(roomId, event.sender, message)) {
+  const identityUserId = identityStore.getUserForIdentityRoom(roomId);
+  if (identityUserId) {
+    if (event.sender === identityUserId) {
+      await maybeHandleIdentityReply(roomId, event.sender, message);
+    }
+    return;
+  }
+
+  if (!postRooms.has(roomId)) {
     return;
   }
 
@@ -57,7 +92,8 @@ async function handleRoomMessage(roomId, event) {
     author_name: displayName,
     author_url: identity.profileUrl || '',
     author_email_hash: identity.emailHash || '',
-    author_avatar_url: identity.avatarUrl || ''
+    author_avatar_url: identity.avatarUrl || '',
+    moderation_state: identityStore.isModerated(event.sender) ? 'hold' : 'approved'
   });
 
   if (result.ignored) {
@@ -67,6 +103,22 @@ async function handleRoomMessage(roomId, event) {
   if (!identity.emailHash && !identity.skipped && !identityStore.hasOnboarded(event.sender)) {
     await sendOnboardingMessage(event.sender);
     await identityStore.markOnboarded(event.sender);
+  }
+}
+
+async function handleMembershipEvent(roomId, event) {
+  if (!postRooms.has(roomId)) {
+    return;
+  }
+
+  const affectedUser = event.state_key;
+  if (!affectedUser || affectedUser === config.matrixUserId) {
+    return;
+  }
+
+  if (['ban', 'leave'].includes(event.content.membership) && event.sender !== affectedUser) {
+    await identityStore.markModerated(affectedUser);
+    console.log(`[beeper-comments] marked ${affectedUser} as moderated after ${event.content.membership} in ${roomId}`);
   }
 }
 
@@ -123,11 +175,12 @@ async function matrixDisplayName(userId) {
 }
 
 async function sendOnboardingMessage(userId) {
-  const roomId = await client.createRoom({
-    invite: [userId],
-    is_direct: true,
-    preset: 'trusted_private_chat'
-  });
+  let roomId = identityStore.getIdentityRoomForUser(userId);
+
+  if (!roomId) {
+    roomId = await client.createDirectRoom(userId);
+    await identityStore.setIdentityRoom(userId, roomId);
+  }
 
   await client.sendText(
     roomId,

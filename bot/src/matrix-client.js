@@ -24,7 +24,7 @@ export class MatrixClient {
     }
   }
 
-  async start(onMessage) {
+  async start(onEvent) {
     await this.load();
 
     while (true) {
@@ -35,7 +35,7 @@ export class MatrixClient {
         await this.joinInvitedRooms(sync);
 
         if (hadExistingCursor) {
-          await this.processJoinedRoomMessages(sync, onMessage);
+          await this.processJoinedRoomEvents(sync, onEvent);
         }
 
         this.nextBatch = sync.next_batch || this.nextBatch;
@@ -78,6 +78,10 @@ export class MatrixClient {
     return this.request('GET', `/_matrix/client/v3/profile/${encodeURIComponent(userId)}`);
   }
 
+  async getAccount() {
+    return this.request('GET', '/_matrix/client/v3/account/whoami');
+  }
+
   async sync() {
     const params = new URLSearchParams({
       timeout: '30000'
@@ -103,16 +107,14 @@ export class MatrixClient {
     }
   }
 
-  async processJoinedRoomMessages(sync, onMessage) {
+  async processJoinedRoomEvents(sync, onEvent) {
     const joinedRooms = sync.rooms?.join || {};
 
     for (const [roomId, room] of Object.entries(joinedRooms)) {
       const events = room.timeline?.events || [];
 
       for (const event of events) {
-        if (event.type === 'm.room.message') {
-          await onMessage(roomId, event);
-        }
+        await onEvent(roomId, event);
       }
     }
   }
@@ -128,7 +130,13 @@ export class MatrixClient {
     });
 
     const text = await response.text();
-    const json = text ? JSON.parse(text) : {};
+    let json = {};
+
+    try {
+      json = text ? JSON.parse(text) : {};
+    } catch {
+      json = { raw: text };
+    }
 
     if (!response.ok) {
       throw new Error(`Matrix API failed with ${response.status}: ${JSON.stringify(json)}`);

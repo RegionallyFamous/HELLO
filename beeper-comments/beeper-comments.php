@@ -47,5 +47,6 @@ function beeper_comments_activate(): void
     add_option('beeper_comments_room_alias_prefix', 'post-');
     add_option('beeper_comments_gravatar_fallback', 'matrix_display_name');
     add_option('beeper_comments_sync_direction', 'both');
+    add_option('beeper_comments_redact_on_moderation', '1');
 }
 register_activation_hook(__FILE__, 'beeper_comments_activate');

@@ -80,6 +80,18 @@ class Matrix_API
     /**
      * @return array<string, mixed>|WP_Error
      */
+    public function get_account()
+    {
+        if (! $this->is_configured()) {
+            return new WP_Error('beeper_comments_matrix_not_configured', __('Matrix homeserver and bot token are required.', 'beeper-comments'));
+        }
+
+        return $this->request('GET', '/_matrix/client/v3/account/whoami');
+    }
+
+    /**
+     * @return array<string, mixed>|WP_Error
+     */
     public function send_room_message(string $room_id, string $message, string $transaction_id)
     {
         if (! $this->is_configured()) {
@@ -99,21 +111,47 @@ class Matrix_API
     }
 
     /**
+     * @return array<string, mixed>|WP_Error
+     */
+    public function redact_event(string $room_id, string $event_id, string $reason, string $transaction_id)
+    {
+        if (! $this->is_configured()) {
+            return new WP_Error('beeper_comments_matrix_not_configured', __('Matrix homeserver and bot token are required.', 'beeper-comments'));
+        }
+
+        $path = sprintf(
+            '/_matrix/client/v3/rooms/%s/redact/%s/%s',
+            rawurlencode($room_id),
+            rawurlencode($event_id),
+            rawurlencode($transaction_id)
+        );
+
+        return $this->request('PUT', $path, [
+            'reason' => $reason,
+        ]);
+    }
+
+    /**
      * @param array<string, mixed> $body
      * @return array<string, mixed>|WP_Error
      */
-    private function request(string $method, string $path, array $body)
+    private function request(string $method, string $path, array $body = [])
     {
         $url = $this->homeserver . $path;
-        $response = wp_remote_request($url, [
+        $args = [
             'method' => $method,
             'timeout' => 15,
             'headers' => [
                 'Authorization' => 'Bearer ' . $this->access_token,
                 'Content-Type' => 'application/json',
             ],
-            'body' => wp_json_encode($body),
-        ]);
+        ];
+
+        if ($method !== 'GET') {
+            $args['body'] = wp_json_encode($body);
+        }
+
+        $response = wp_remote_request($url, $args);
 
         if (is_wp_error($response)) {
             return $response;
