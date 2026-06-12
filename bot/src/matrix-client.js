@@ -47,8 +47,8 @@ export class MatrixClient {
     }
   }
 
-  async sendText(roomId, body) {
-    const transactionId = `beeper-${Date.now()}-${Math.random().toString(36).slice(2)}`;
+  async sendText(roomId, body, transactionId = '') {
+    transactionId = transactionId || `hello-${Date.now()}-${Math.random().toString(36).slice(2)}`;
 
     return this.request(
       'PUT',
@@ -57,6 +57,39 @@ export class MatrixClient {
         msgtype: 'm.text',
         body
       }
+    );
+  }
+
+  async createPublicPostRoom({ name, topic, roomAliasName }) {
+    const response = await this.request('POST', '/_matrix/client/v3/createRoom', {
+      name,
+      topic,
+      preset: 'public_chat',
+      room_alias_name: roomAliasName,
+      initial_state: [
+        {
+          type: 'm.room.guest_access',
+          content: {
+            guest_access: 'can_join'
+          }
+        }
+      ]
+    });
+
+    if (!response.room_id) {
+      throw new Error('Matrix createRoom response did not include room_id');
+    }
+
+    return response;
+  }
+
+  async redactEvent(roomId, eventId, reason, transactionId = '') {
+    transactionId = transactionId || `hello-redact-${Date.now()}-${Math.random().toString(36).slice(2)}`;
+
+    return this.request(
+      'PUT',
+      `/_matrix/client/v3/rooms/${encodeURIComponent(roomId)}/redact/${encodeURIComponent(eventId)}/${encodeURIComponent(transactionId)}`,
+      { reason }
     );
   }
 

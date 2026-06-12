@@ -25,6 +25,7 @@ define('HELLO_DIR', plugin_dir_path(__FILE__));
 define('HELLO_URL', plugin_dir_url(__FILE__));
 
 require_once HELLO_DIR . 'includes/class-matrix-api.php';
+require_once HELLO_DIR . 'includes/class-bridge-api.php';
 require_once HELLO_DIR . 'includes/class-gravatar.php';
 require_once HELLO_DIR . 'includes/class-comment-sync.php';
 require_once HELLO_DIR . 'includes/class-admin-settings.php';
@@ -47,6 +48,9 @@ function hello_activate(): void
         update_option('hello_bot_secret', wp_generate_password(48, false, false));
     }
 
+    add_option('hello_connection_mode', 'bridge');
+    add_option('hello_bridge_url', '');
+    add_option('hello_bridge_token', '');
     add_option('hello_homeserver', 'https://matrix.org');
     add_option('hello_room_alias_prefix', 'post-');
     add_option('hello_gravatar_fallback', 'matrix_display_name');

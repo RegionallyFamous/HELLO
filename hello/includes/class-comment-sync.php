@@ -78,7 +78,7 @@ class Comment_Sync
      */
     public function create_room_for_post(WP_Post $post)
     {
-        $api = new Matrix_API();
+        $api = $this->transport();
         $room = $api->create_room_for_post($post);
 
         if (is_wp_error($room)) {
@@ -272,16 +272,17 @@ class Comment_Sync
     {
         unset($request);
 
-        $api = new Matrix_API();
-        $account = $api->get_account();
+        $api = $this->transport();
+        $account = $api instanceof Bridge_API ? $api->get_status() : $api->get_account();
 
         return new WP_REST_Response([
             'plugin_version' => HELLO_VERSION,
             'wordpress_url' => home_url('/'),
-            'matrix_configured' => $api->is_configured(),
-            'matrix_account_ok' => ! is_wp_error($account),
-            'matrix_account' => is_wp_error($account) ? null : $account,
-            'matrix_error' => is_wp_error($account) ? $account->get_error_message() : '',
+            'connection_mode' => $this->connection_mode(),
+            'transport_configured' => $api->is_configured(),
+            'transport_ok' => ! is_wp_error($account),
+            'transport_status' => is_wp_error($account) ? null : $account,
+            'transport_error' => is_wp_error($account) ? $account->get_error_message() : '',
             'known_room_count' => count($this->known_rooms()),
             'sync_direction' => $this->sync_direction(),
         ], 200);
@@ -422,7 +423,7 @@ class Comment_Sync
         $message = sprintf("%s via WordPress:\n\n%s", $author, $content);
         $transaction_id = 'wp-comment-' . $comment_id;
 
-        $result = (new Matrix_API())->send_room_message($room_id, $message, $transaction_id);
+        $result = $this->transport()->send_room_message($room_id, $message, $transaction_id, $post_id, $comment_id, $author);
         if (is_wp_error($result)) {
             error_log('[HELLO] Failed to send comment ' . $comment_id . ' to Matrix: ' . $result->get_error_message());
             update_post_meta($post_id, self::META_LAST_ERROR, $result->get_error_message());
@@ -477,6 +478,20 @@ class Comment_Sync
     {
         $direction = (string) get_option('hello_sync_direction', 'both');
         return in_array($direction, ['both', 'matrix_to_wp', 'wp_to_matrix'], true) ? $direction : 'both';
+    }
+
+    private function connection_mode(): string
+    {
+        $mode = (string) get_option('hello_connection_mode', 'bridge');
+        return in_array($mode, ['bridge', 'direct_matrix'], true) ? $mode : 'bridge';
+    }
+
+    /**
+     * @return Bridge_API|Matrix_API
+     */
+    private function transport()
+    {
+        return $this->connection_mode() === 'direct_matrix' ? new Matrix_API() : new Bridge_API();
     }
 
     /**
@@ -561,7 +576,7 @@ class Comment_Sync
         }
 
         $reason = sprintf(__('WordPress comment marked as %s.', 'hello'), $status);
-        $result = (new Matrix_API())->redact_event($room_id, $event_id, $reason, 'wp-redact-comment-' . (int) $comment->comment_ID);
+        $result = $this->transport()->redact_event($room_id, $event_id, $reason, 'wp-redact-comment-' . (int) $comment->comment_ID);
 
         if (is_wp_error($result)) {
             error_log('[HELLO] Failed to redact Matrix event for comment ' . (int) $comment->comment_ID . ': ' . $result->get_error_message());

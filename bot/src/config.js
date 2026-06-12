@@ -53,3 +53,34 @@ export function getConfig() {
 
   return config;
 }
+
+export function getBridgeConfig() {
+  loadEnvFile();
+
+  const config = {
+    matrixHomeserverUrl: process.env.MATRIX_HOMESERVER_URL || 'https://matrix.org',
+    matrixAccessToken: process.env.MATRIX_ACCESS_TOKEN || '',
+    matrixUserId: process.env.MATRIX_USER_ID || '',
+    bridgeApiToken: process.env.BRIDGE_API_TOKEN || '',
+    bridgePort: Number.parseInt(process.env.BRIDGE_PORT || '8787', 10),
+    identityStorePath: process.env.IDENTITY_STORE_PATH || '.data/identities.json',
+    matrixSyncStorePath: process.env.MATRIX_SYNC_STORE_PATH || '.data/matrix-sync.json',
+    siteRegistryPath: process.env.SITE_REGISTRY_PATH || '.data/sites.json'
+  };
+
+  const missing = Object.entries({
+    MATRIX_ACCESS_TOKEN: config.matrixAccessToken,
+    MATRIX_USER_ID: config.matrixUserId,
+    BRIDGE_API_TOKEN: config.bridgeApiToken
+  }).filter(([, value]) => !value);
+
+  if (missing.length) {
+    throw new Error(`Missing required environment variables: ${missing.map(([key]) => key).join(', ')}`);
+  }
+
+  if (!Number.isFinite(config.bridgePort) || config.bridgePort < 1 || config.bridgePort > 65535) {
+    throw new Error('BRIDGE_PORT must be a valid TCP port');
+  }
+
+  return config;
+}

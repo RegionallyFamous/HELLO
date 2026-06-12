@@ -1,6 +1,7 @@
 export class WordPressClient {
-  constructor({ baseUrl, botSecret, fetchImpl = fetch }) {
+  constructor({ baseUrl = '', incomingUrl = '', botSecret, fetchImpl = fetch }) {
     this.baseUrl = baseUrl.replace(/\/$/, '');
+    this.incomingUrl = incomingUrl;
     this.botSecret = botSecret;
     this.fetch = fetchImpl;
   }
@@ -19,7 +20,10 @@ export class WordPressClient {
   }
 
   async postBotEndpoint(endpoint, payload = {}, options = {}) {
-    const response = await this.fetch(`${this.baseUrl}/wp-json/hello/v1/${endpoint}`, {
+    const url = endpoint === 'incoming' && this.incomingUrl
+      ? this.incomingUrl
+      : `${this.baseUrl}/wp-json/hello/v1/${endpoint}`;
+    const response = await this.fetch(url, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json'

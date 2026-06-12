@@ -39,3 +39,22 @@ test('WordPressClient treats unknown incoming rooms as ignored', async () => {
   assert.equal(result.ignored, true);
   assert.equal(result.status, 404);
 });
+
+test('WordPressClient can post to a stored incoming callback URL', async () => {
+  let calledUrl = '';
+  const client = new WordPressClient({
+    incomingUrl: 'https://example.com/custom/incoming',
+    botSecret: 'shared',
+    fetchImpl: async (url) => {
+      calledUrl = url;
+      return {
+        ok: true,
+        json: async () => ({ comment_id: 1 })
+      };
+    }
+  });
+
+  await client.postIncomingMessage({ room_id: '!room:matrix.org' });
+
+  assert.equal(calledUrl, 'https://example.com/custom/incoming');
+});

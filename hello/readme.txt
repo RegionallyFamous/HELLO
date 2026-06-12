@@ -9,9 +9,9 @@ Turns WordPress post comments into Matrix rooms that can be opened in Beeper.
 
 == Description ==
 
-HELLO creates a Matrix room when a post is published, adds a join button to the comment form, accepts Matrix messages through a secured REST webhook, and syncs approved WordPress comments back to the Matrix room.
+HELLO asks a hosted bridge to create a Matrix room when a post is published, adds a join button to the comment form, accepts Matrix messages through a secured REST webhook, and syncs approved WordPress comments back through the bridge to the Matrix room.
 
-The companion Node bot listens to Matrix rooms and calls the plugin webhook when readers send messages.
+The companion HELLO Bridge listens to Matrix rooms and calls the plugin webhook when readers send messages. WordPress sites only need the plugin installed.
 
 == Installation ==
 

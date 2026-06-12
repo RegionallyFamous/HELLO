@@ -92,8 +92,10 @@ class Matrix_API
     /**
      * @return array<string, mixed>|WP_Error
      */
-    public function send_room_message(string $room_id, string $message, string $transaction_id)
+    public function send_room_message(string $room_id, string $message, string $transaction_id, int $post_id = 0, int $comment_id = 0, string $author = '')
     {
+        unset($post_id, $comment_id, $author);
+
         if (! $this->is_configured()) {
             return new WP_Error('hello_matrix_not_configured', __('Matrix homeserver and bot token are required.', 'hello'));
         }
