@@ -33,6 +33,8 @@ npm start
 
 Put it behind HTTPS at a stable URL such as `https://hello.example.com`.
 
+For managed hosting, the preferred production shape is the Docker image in `bot/Dockerfile` plus a persistent `/data` volume. See [docs/HOSTING.md](docs/HOSTING.md).
+
 ## 2. Install The WordPress Plugin
 
 Build the plugin zip:
@@ -73,6 +75,10 @@ The primary REST namespace is `/wp-json/hello/v1`.
 ## 5. Production Service
 
 Run the bridge under a process manager such as systemd, launchd, PM2, or Docker. Preserve `.data/` across restarts.
+
+The bridge also supports the standard `PORT` environment variable used by many managed hosts. If both `BRIDGE_PORT` and `PORT` are set, `BRIDGE_PORT` wins.
+
+Use `GET /v1/live` for unauthenticated container liveness checks. Use authenticated `GET /v1/health` for deeper Matrix account checks.
 
 ### systemd Example
 

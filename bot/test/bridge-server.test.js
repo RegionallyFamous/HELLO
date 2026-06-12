@@ -21,6 +21,25 @@ test('BridgeServer rejects unauthorized requests', async () => {
   }
 });
 
+test('BridgeServer exposes an unauthenticated liveness endpoint', async () => {
+  const server = new BridgeServer({
+    token: 'secret',
+    matrix: {},
+    registry: { allRooms: () => [] }
+  }).listen(0);
+
+  try {
+    const { port } = server.address();
+    const response = await fetch(`http://127.0.0.1:${port}/v1/live`);
+    const body = await response.json();
+
+    assert.equal(response.status, 200);
+    assert.equal(body.ok, true);
+  } finally {
+    server.close();
+  }
+});
+
 test('BridgeServer creates a Matrix room and persists mapping', async () => {
   const saved = [];
   const server = new BridgeServer({

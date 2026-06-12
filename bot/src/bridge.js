@@ -1,14 +1,18 @@
-import { mkdirSync } from 'node:fs';
 import { getBridgeConfig } from './config.js';
 import { BridgeServer } from './bridge-server.js';
 import { IdentityStore } from './identity-store.js';
 import { looksLikeEmail, resolveGravatar } from './gravatar.js';
 import { MatrixClient } from './matrix-client.js';
+import { ensureStateDirectories } from './runtime.js';
 import { SiteRegistry } from './site-registry.js';
 import { WordPressClient } from './wordpress-client.js';
 
 const config = getBridgeConfig();
-mkdirSync('.data', { recursive: true });
+ensureStateDirectories([
+  config.identityStorePath,
+  config.matrixSyncStorePath,
+  config.siteRegistryPath
+]);
 
 const matrix = new MatrixClient({
   homeserverUrl: config.matrixHomeserverUrl,

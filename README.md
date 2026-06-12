@@ -7,6 +7,7 @@ HELLO is a WordPress plugin plus a hosted bridge service that turns a post comme
 - `hello/` - WordPress plugin.
 - `bot/` - Node.js HELLO Bridge service using the Matrix Client-Server API.
 - `DEPLOYMENT.md` - production setup and operations runbook.
+- `docs/HOSTING.md` - provider-neutral container hosting guide.
 
 ## Feature Coverage
 
@@ -22,6 +23,7 @@ HELLO is a WordPress plugin plus a hosted bridge service that turns a post comme
 - Resolves Matrix users to Gravatar metadata through a private DM onboarding flow.
 - Keeps bot state in local JSON files with no plaintext reader email storage.
 - Provides direct single-site bot mode for development and local automated tests.
+- Ships a provider-neutral Docker/Compose path for hosted bridge deployments.
 
 ## Quick Start
 
@@ -62,3 +64,5 @@ The webhook requires `bot_secret` to match the value stored in WordPress setting
 HELLO targets WordPress 7.0+ and PHP 8.0+.
 
 See [DEPLOYMENT.md](DEPLOYMENT.md) for the production runbook.
+
+For a future-proof hosted bridge, package the bridge as an OCI container and keep its state on a persistent volume. See [docs/HOSTING.md](docs/HOSTING.md).

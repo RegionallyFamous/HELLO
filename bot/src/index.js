@@ -1,12 +1,15 @@
-import { mkdirSync } from 'node:fs';
 import { getConfig } from './config.js';
 import { IdentityStore } from './identity-store.js';
 import { looksLikeEmail, resolveGravatar } from './gravatar.js';
 import { MatrixClient } from './matrix-client.js';
+import { ensureStateDirectories } from './runtime.js';
 import { WordPressClient } from './wordpress-client.js';
 
 const config = getConfig();
-mkdirSync('.data', { recursive: true });
+ensureStateDirectories([
+  config.identityStorePath,
+  config.matrixSyncStorePath
+]);
 const client = new MatrixClient({
   homeserverUrl: config.matrixHomeserverUrl,
   accessToken: config.matrixAccessToken,

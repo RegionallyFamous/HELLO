@@ -24,6 +24,13 @@ export class BridgeServer {
   async handle(request, response) {
     const path = new URL(request.url, 'http://hello.local').pathname;
 
+    if (path === '/v1/live') {
+      this.sendJson(response, 200, {
+        ok: true
+      });
+      return;
+    }
+
     if (path === '/v1/health') {
       await this.requireAuth(request);
       const account = await this.matrix.getAccount();

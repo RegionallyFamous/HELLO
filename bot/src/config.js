@@ -1,5 +1,6 @@
 import { readFileSync, existsSync } from 'node:fs';
 import { resolve } from 'node:path';
+import { resolvePort } from './runtime.js';
 
 export function loadEnvFile(path = '.env') {
   const fullPath = resolve(path);
@@ -62,7 +63,12 @@ export function getBridgeConfig() {
     matrixAccessToken: process.env.MATRIX_ACCESS_TOKEN || '',
     matrixUserId: process.env.MATRIX_USER_ID || '',
     bridgeApiToken: process.env.BRIDGE_API_TOKEN || '',
-    bridgePort: Number.parseInt(process.env.BRIDGE_PORT || '8787', 10),
+    bridgePort: resolvePort({
+      primary: process.env.BRIDGE_PORT,
+      fallback: process.env.PORT,
+      defaultPort: '8787',
+      name: 'BRIDGE_PORT or PORT'
+    }),
     identityStorePath: process.env.IDENTITY_STORE_PATH || '.data/identities.json',
     matrixSyncStorePath: process.env.MATRIX_SYNC_STORE_PATH || '.data/matrix-sync.json',
     siteRegistryPath: process.env.SITE_REGISTRY_PATH || '.data/sites.json'
@@ -76,10 +82,6 @@ export function getBridgeConfig() {
 
   if (missing.length) {
     throw new Error(`Missing required environment variables: ${missing.map(([key]) => key).join(', ')}`);
-  }
-
-  if (!Number.isFinite(config.bridgePort) || config.bridgePort < 1 || config.bridgePort > 65535) {
-    throw new Error('BRIDGE_PORT must be a valid TCP port');
   }
 
   return config;
