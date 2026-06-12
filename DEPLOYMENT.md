@@ -1,6 +1,6 @@
 # HELLO Deployment
 
-This runbook assumes a normal WordPress install and a Matrix bot account on the homeserver you want to use.
+This runbook assumes WordPress 7.0+, PHP 8.0+, and a Matrix bot account on the homeserver you want to use.
 
 ## 1. Install The WordPress Plugin
 

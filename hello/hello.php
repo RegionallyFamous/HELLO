@@ -2,11 +2,15 @@
 /**
  * Plugin Name: HELLO
  * Description: Syncs WordPress post comments with Matrix rooms that can be opened in Beeper.
+ * Plugin URI: https://github.com/RegionallyFamous/HELLO
  * Version: 0.1.0
  * Author: HELLO
+ * License: GPL-2.0-or-later
+ * License URI: https://www.gnu.org/licenses/gpl-2.0.html
  * Requires PHP: 8.0
- * Requires at least: 6.2
+ * Requires at least: 7.0
  * Text Domain: hello
+ * Update URI: https://github.com/RegionallyFamous/HELLO
  */
 
 declare(strict_types=1);

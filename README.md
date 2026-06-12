@@ -60,4 +60,6 @@ POST /wp-json/hello/v1/incoming
 
 The webhook requires `bot_secret` to match the value stored in WordPress settings.
 
+HELLO targets WordPress 7.0+ and PHP 8.0+.
+
 See [DEPLOYMENT.md](DEPLOYMENT.md) for the production runbook.

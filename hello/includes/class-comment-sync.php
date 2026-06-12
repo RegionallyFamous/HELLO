@@ -9,6 +9,7 @@ use WP_Error;
 use WP_Post;
 use WP_REST_Request;
 use WP_REST_Response;
+use WP_REST_Server;
 
 class Comment_Sync
 {
@@ -45,7 +46,10 @@ class Comment_Sync
             HELLO_URL . 'assets/join-button.js',
             [],
             HELLO_VERSION,
-            true
+            [
+                'in_footer' => true,
+                'strategy' => 'defer',
+            ]
         );
 
         wp_enqueue_style(
@@ -96,53 +100,92 @@ class Comment_Sync
     public function register_rest_routes(): void
     {
         register_rest_route('hello/v1', '/incoming', [
-            'methods' => 'POST',
+            'methods' => WP_REST_Server::CREATABLE,
             'callback' => [$this, 'handle_incoming_matrix_message'],
-            'permission_callback' => '__return_true',
+            'permission_callback' => [$this, 'authorize_rest_request'],
             'args' => [
                 'room_id' => [
                     'required' => true,
                     'type' => 'string',
+                    'sanitize_callback' => 'sanitize_text_field',
+                    'validate_callback' => [$this, 'validate_required_string'],
                 ],
                 'matrix_user_id' => [
                     'required' => true,
                     'type' => 'string',
+                    'sanitize_callback' => 'sanitize_text_field',
+                    'validate_callback' => [$this, 'validate_required_string'],
                 ],
                 'message' => [
                     'required' => true,
                     'type' => 'string',
+                    'sanitize_callback' => 'wp_kses_post',
+                    'validate_callback' => [$this, 'validate_required_string'],
                 ],
                 'event_id' => [
                     'required' => true,
                     'type' => 'string',
+                    'sanitize_callback' => 'sanitize_text_field',
+                    'validate_callback' => [$this, 'validate_required_string'],
                 ],
                 'bot_secret' => [
                     'required' => true,
                     'type' => 'string',
+                    'sanitize_callback' => 'sanitize_text_field',
+                    'validate_callback' => [$this, 'validate_required_string'],
+                ],
+                'author_name' => [
+                    'required' => false,
+                    'type' => 'string',
+                    'sanitize_callback' => 'sanitize_text_field',
+                ],
+                'author_url' => [
+                    'required' => false,
+                    'type' => 'string',
+                    'sanitize_callback' => 'esc_url_raw',
+                ],
+                'author_email_hash' => [
+                    'required' => false,
+                    'type' => 'string',
+                    'sanitize_callback' => [Gravatar::class, 'sanitize_hash'],
+                ],
+                'author_avatar_url' => [
+                    'required' => false,
+                    'type' => 'string',
+                    'sanitize_callback' => 'esc_url_raw',
+                ],
+                'moderation_state' => [
+                    'required' => false,
+                    'type' => 'string',
+                    'sanitize_callback' => 'sanitize_key',
                 ],
             ],
         ]);
 
         register_rest_route('hello/v1', '/rooms', [
-            'methods' => 'POST',
+            'methods' => WP_REST_Server::CREATABLE,
             'callback' => [$this, 'handle_rooms_request'],
-            'permission_callback' => '__return_true',
+            'permission_callback' => [$this, 'authorize_rest_request'],
             'args' => [
                 'bot_secret' => [
                     'required' => true,
                     'type' => 'string',
+                    'sanitize_callback' => 'sanitize_text_field',
+                    'validate_callback' => [$this, 'validate_required_string'],
                 ],
             ],
         ]);
 
         register_rest_route('hello/v1', '/health', [
-            'methods' => 'POST',
+            'methods' => WP_REST_Server::CREATABLE,
             'callback' => [$this, 'handle_health_request'],
-            'permission_callback' => '__return_true',
+            'permission_callback' => [$this, 'authorize_rest_request'],
             'args' => [
                 'bot_secret' => [
                     'required' => true,
                     'type' => 'string',
+                    'sanitize_callback' => 'sanitize_text_field',
+                    'validate_callback' => [$this, 'validate_required_string'],
                 ],
             ],
         ]);
@@ -150,11 +193,6 @@ class Comment_Sync
 
     public function handle_incoming_matrix_message(WP_REST_Request $request): WP_REST_Response
     {
-        $auth_error = $this->validate_bot_secret($request);
-        if ($auth_error instanceof WP_REST_Response) {
-            return $auth_error;
-        }
-
         if (! in_array($this->sync_direction(), ['both', 'matrix_to_wp'], true)) {
             return new WP_REST_Response(['message' => __('Matrix to WordPress sync is disabled.', 'hello')], 202);
         }
@@ -223,10 +261,7 @@ class Comment_Sync
 
     public function handle_rooms_request(WP_REST_Request $request): WP_REST_Response
     {
-        $auth_error = $this->validate_bot_secret($request);
-        if ($auth_error instanceof WP_REST_Response) {
-            return $auth_error;
-        }
+        unset($request);
 
         return new WP_REST_Response([
             'rooms' => $this->known_rooms(),
@@ -235,10 +270,7 @@ class Comment_Sync
 
     public function handle_health_request(WP_REST_Request $request): WP_REST_Response
     {
-        $auth_error = $this->validate_bot_secret($request);
-        if ($auth_error instanceof WP_REST_Response) {
-            return $auth_error;
-        }
+        unset($request);
 
         $api = new Matrix_API();
         $account = $api->get_account();
@@ -447,14 +479,24 @@ class Comment_Sync
         return in_array($direction, ['both', 'matrix_to_wp', 'wp_to_matrix'], true) ? $direction : 'both';
     }
 
-    private function validate_bot_secret(WP_REST_Request $request): ?WP_REST_Response
+    /**
+     * @return true|WP_Error
+     */
+    public function authorize_rest_request(WP_REST_Request $request)
     {
         $secret = (string) get_option('hello_bot_secret', '');
         if ($secret === '' || ! hash_equals($secret, (string) $request->get_param('bot_secret'))) {
-            return new WP_REST_Response(['message' => __('Invalid bot secret.', 'hello')], 403);
+            return new WP_Error('hello_invalid_bot_secret', __('Invalid bot secret.', 'hello'), ['status' => 403]);
         }
 
-        return null;
+        return true;
+    }
+
+    public function validate_required_string($value, ?WP_REST_Request $request = null, string $param = ''): bool
+    {
+        unset($request, $param);
+
+        return is_string($value) && trim($value) !== '';
     }
 
     /**

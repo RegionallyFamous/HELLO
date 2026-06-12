@@ -40,7 +40,10 @@ class Admin_Settings
         foreach ($this->settings as $option => $type) {
             register_setting('hello', $option, [
                 'type' => 'string',
+                'label' => $this->label_for($option),
+                'description' => $this->description_for($option),
                 'sanitize_callback' => fn ($value) => $this->sanitize_setting((string) $value, $option),
+                'show_in_rest' => false,
                 'default' => $this->default_for($option),
             ]);
         }
@@ -198,6 +201,38 @@ class Admin_Settings
         ];
 
         return $defaults[$option] ?? '';
+    }
+
+    private function label_for(string $option): string
+    {
+        $labels = [
+            'hello_homeserver' => __('Homeserver URL', 'hello'),
+            'hello_bot_token' => __('Bot access token', 'hello'),
+            'hello_bot_user' => __('Bot user ID', 'hello'),
+            'hello_bot_secret' => __('Webhook shared secret', 'hello'),
+            'hello_room_alias_prefix' => __('Room alias prefix', 'hello'),
+            'hello_gravatar_fallback' => __('Gravatar fallback', 'hello'),
+            'hello_sync_direction' => __('Sync direction', 'hello'),
+            'hello_redact_on_moderation' => __('Redact moderated Matrix messages', 'hello'),
+        ];
+
+        return $labels[$option] ?? $option;
+    }
+
+    private function description_for(string $option): string
+    {
+        $descriptions = [
+            'hello_homeserver' => __('Matrix homeserver base URL.', 'hello'),
+            'hello_bot_token' => __('Access token for the Matrix bot account.', 'hello'),
+            'hello_bot_user' => __('Matrix user ID for the bot account.', 'hello'),
+            'hello_bot_secret' => __('Shared secret required by HELLO bot REST requests.', 'hello'),
+            'hello_room_alias_prefix' => __('Prefix used when HELLO creates Matrix room aliases.', 'hello'),
+            'hello_gravatar_fallback' => __('Identity fallback when no Gravatar profile is available.', 'hello'),
+            'hello_sync_direction' => __('Controls whether Matrix, WordPress, or both sides are synced.', 'hello'),
+            'hello_redact_on_moderation' => __('Whether Matrix events are redacted when synced comments are spammed or trashed.', 'hello'),
+        ];
+
+        return $descriptions[$option] ?? '';
     }
 
     private function render_status_panel(): void
