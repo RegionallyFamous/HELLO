@@ -1,13 +1,11 @@
 (() => {
-  const buttons = document.querySelectorAll('.hello-join-btn[data-matrix-uri][data-web-uri]');
+  const buttons = document.querySelectorAll('.hello-join-btn[data-join-uri]');
   const copyButtons = document.querySelectorAll('.hello-copy-btn[data-copy-value]');
 
   buttons.forEach((button) => {
     button.addEventListener('click', () => {
-      const webUri = button.getAttribute('data-web-uri');
-
       window.setTimeout(() => {
-        if (document.visibilityState === 'visible' && webUri) {
+        if (document.visibilityState === 'visible') {
           const fallback = button.closest('.hello-join')?.querySelector('.hello-copy-btn');
           fallback?.focus();
         }

@@ -45,7 +45,7 @@ That is it for customer sites. HELLO uses the hosted RegionallyFamous bridge aut
 
 ## What Readers See
 
-On posts with a HELLO room, readers get a simple **Join the discussion in Beeper** button. If Beeper does not open automatically, HELLO shows a copyable room address they can paste into Beeper's Matrix room join flow.
+On posts with a HELLO room, readers get a simple **Open the Beeper discussion** button. It opens a HELLO helper page that can launch Beeper directly and gives readers a copyable room code only if the app needs a hand.
 
 ## Repos
 

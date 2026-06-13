@@ -474,18 +474,26 @@ class Comment_Sync
         }
 
         $matrix_target = $room_alias !== '' ? $room_alias : $room_id;
-        $matrix_uri = 'matrix:r/' . ltrim($matrix_target, '#!');
-        $web_uri = 'https://matrix.to/#/' . rawurlencode($matrix_target);
+        $bridge_url = defined('HELLO_BRIDGE_URL') ? (string) constant('HELLO_BRIDGE_URL') : (string) get_option('hello_bridge_url', HELLO_DEFAULT_BRIDGE_URL);
+        $bridge_url = $bridge_url !== '' ? $bridge_url : HELLO_DEFAULT_BRIDGE_URL;
+        $join_url = add_query_arg(
+            [
+                'room' => $matrix_target,
+                'id' => $room_id,
+                'title' => wp_strip_all_tags((string) get_the_title($post_id)),
+                'post' => (string) get_permalink($post_id),
+            ],
+            trailingslashit($bridge_url) . 'join'
+        );
         ?>
         <div class="hello-join">
             <a
-                href="<?php echo esc_url($web_uri); ?>"
+                href="<?php echo esc_url($join_url); ?>"
                 class="hello-join-btn"
                 target="_blank"
                 rel="noopener"
-                data-matrix-uri="<?php echo esc_attr($matrix_uri); ?>"
-                data-web-uri="<?php echo esc_url($web_uri); ?>"
-            ><?php esc_html_e('Join the discussion in Beeper', 'hello'); ?></a>
+                data-join-uri="<?php echo esc_url($join_url); ?>"
+            ><?php esc_html_e('Open the Beeper discussion', 'hello'); ?></a>
             <p class="hello-hint">
                 <?php esc_html_e('Messages sent in Beeper appear here as comments.', 'hello'); ?>
             </p>
@@ -495,12 +503,12 @@ class Comment_Sync
                     type="button"
                     class="hello-copy-btn"
                     data-copy-value="<?php echo esc_attr($matrix_target); ?>"
-                    data-copy-label="<?php echo esc_attr__('Copy room address', 'hello'); ?>"
+                    data-copy-label="<?php echo esc_attr__('Copy room code', 'hello'); ?>"
                     data-copied-label="<?php echo esc_attr__('Copied', 'hello'); ?>"
-                ><?php esc_html_e('Copy room address', 'hello'); ?></button>
+                ><?php esc_html_e('Copy room code', 'hello'); ?></button>
             </div>
             <p class="hello-fallback">
-                <?php esc_html_e('In Beeper, use Join Matrix room and paste this address if the button does not open it.', 'hello'); ?>
+                <?php esc_html_e('HELLO opens a helper page first, so readers do not have to handle raw chat links.', 'hello'); ?>
             </p>
             <p class="hello-copy-status" aria-live="polite"></p>
         </div>
