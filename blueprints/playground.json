@@ -1,0 +1,31 @@
+{
+  "$schema": "https://playground.wordpress.net/blueprint-schema.json",
+  "landingPage": "/?p=123",
+  "preferredVersions": {
+    "php": "8.4",
+    "wp": "latest"
+  },
+  "features": {
+    "networking": true
+  },
+  "steps": [
+    {
+      "step": "installPlugin",
+      "pluginData": {
+        "resource": "git:directory",
+        "url": "https://github.com/RegionallyFamous/HELLO",
+        "path": "hello",
+        "ref": "main",
+        "refType": "branch"
+      },
+      "options": {
+        "activate": true,
+        "targetFolderName": "hello"
+      }
+    },
+    {
+      "step": "runPHP",
+      "code": "<?php\nrequire '/wordpress/wp-load.php';\n\nupdate_option('blogname', 'HELLO Comments Demo');\nupdate_option('blogdescription', 'WordPress comments, alive in Beeper.');\nupdate_option('default_comment_status', 'open');\nupdate_option('comment_order', 'asc');\nupdate_option('thread_comments', '1');\nupdate_option('hello_bridge_url', 'https://hellobridge.up.railway.app');\nupdate_option('hello_sync_direction', 'matrix_to_wp');\n\n$posts = get_posts([\n    'numberposts' => -1,\n    'post_type' => ['post', 'page'],\n    'post_status' => 'any',\n]);\n\nforeach ($posts as $post) {\n    wp_delete_post($post->ID, true);\n}\n\n$post_id = wp_insert_post([\n    'import_id' => 123,\n    'post_title' => 'HELLO turns comments into a room',\n    'post_name' => 'hello-demo',\n    'post_content' => '<!-- wp:paragraph --><p>HELLO keeps the native WordPress comment form and gives every post a Beeper-ready Matrix room.</p><!-- /wp:paragraph --><!-- wp:paragraph --><p>Readers can comment here like they always have, or jump into Beeper and keep the same conversation moving there.</p><!-- /wp:paragraph --><!-- wp:quote --><blockquote class=\"wp-block-quote\"><p>The open web gets the durable archive. Chat gets the quick back-and-forth.</p></blockquote><!-- /wp:quote --><!-- wp:paragraph --><p>Scroll to the comments to see the visitor experience: normal WordPress comments, plus a HELLO button that opens the matching room.</p><!-- /wp:paragraph -->',\n    'post_status' => 'publish',\n    'post_type' => 'post',\n    'comment_status' => 'open',\n]);\n\nupdate_post_meta($post_id, '_hello_room_id', '!zSoNBKCjOmubTNItrP:beeper.com');\nupdate_post_meta($post_id, '_hello_room_alias', '#hello-wp-demo:beeper.com');\n\n$comments = [\n    [\n        'author' => 'Maya Chen',\n        'content' => 'This feels like the missing bridge between blog comments and real-time discussion.',\n        'origin' => 'wordpress',\n        'matrix_id' => '',\n        'event_id' => '',\n    ],\n    [\n        'author' => 'hellowp',\n        'content' => 'Matrix side check-in: this is the same conversation, just from Beeper.',\n        'origin' => 'matrix',\n        'matrix_id' => '@hellowp:beeper.com',\n        'event_id' => '$hello-demo-1',\n    ],\n    [\n        'author' => 'Ari on Beeper',\n        'content' => 'I like that the post still owns the archive. Chat can move fast without losing the public thread.',\n        'origin' => 'matrix',\n        'matrix_id' => '@ari-demo:beeper.com',\n        'event_id' => '$hello-demo-2',\n    ],\n    [\n        'author' => 'Jordan Rivera',\n        'content' => 'Leaving a normal WordPress comment still works exactly the way I expect.',\n        'origin' => 'wordpress',\n        'matrix_id' => '',\n        'event_id' => '',\n    ],\n];\n\nforeach ($comments as $index => $comment) {\n    $comment_id = wp_insert_comment([\n        'comment_post_ID' => $post_id,\n        'comment_author' => $comment['author'],\n        'comment_author_email' => 'demo' . $index . '@example.com',\n        'comment_author_url' => '',\n        'comment_content' => $comment['content'],\n        'comment_type' => 'comment',\n        'comment_approved' => 1,\n        'comment_date' => gmdate('Y-m-d H:i:s', time() - ((4 - $index) * 300)),\n        'comment_date_gmt' => gmdate('Y-m-d H:i:s', time() - ((4 - $index) * 300)),\n    ]);\n\n    if ($comment_id && $comment['origin'] === 'matrix') {\n        add_comment_meta($comment_id, '_hello_origin', 'matrix', true);\n        add_comment_meta($comment_id, '_hello_synced', '1', true);\n        add_comment_meta($comment_id, '_hello_matrix_id', $comment['matrix_id'], true);\n        add_comment_meta($comment_id, '_hello_event_id', $comment['event_id'], true);\n    }\n}\n\nwp_update_comment_count_now($post_id);\nflush_rewrite_rules();"
+    }
+  ]
+}

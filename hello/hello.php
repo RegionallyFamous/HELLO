@@ -23,7 +23,7 @@ define('HELLO_VERSION', '0.1.0');
 define('HELLO_FILE', __FILE__);
 define('HELLO_DIR', plugin_dir_path(__FILE__));
 define('HELLO_URL', plugin_dir_url(__FILE__));
-define('HELLO_DEFAULT_BRIDGE_URL', 'https://bridge-production-9791.up.railway.app');
+define('HELLO_DEFAULT_BRIDGE_URL', 'https://hellobridge.up.railway.app');
 
 require_once HELLO_DIR . 'includes/class-bridge-api.php';
 require_once HELLO_DIR . 'includes/class-gravatar.php';

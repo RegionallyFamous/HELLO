@@ -10,6 +10,10 @@ Install the plugin. Publish a post. HELLO gives that post a live conversation ro
 
 No new commenting system. No customer-run server. No "please create a Matrix bot" setup screen. Just WordPress comments with a pulse.
 
+## Try It
+
+Open the [HELLO Playground demo](https://playground.wordpress.net/?blueprint-url=https://raw.githubusercontent.com/RegionallyFamous/HELLO/main/blueprints/playground.json) to see the reader-facing experience in a temporary WordPress site. It loads a sample post, native comments, and the HELLO Beeper room button.
+
 ## Why This Is Cool
 
 HELLO makes comments portable, alive, and still yours.
