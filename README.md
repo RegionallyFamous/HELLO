@@ -1,44 +1,53 @@
 # HELLO
 
-HELLO is a WordPress plugin plus a hosted bridge service that turns a post comment section into a Matrix room that can be opened from Beeper or any Matrix client.
+![HELLO turns WordPress comments into live Beeper conversations](assets/hello-riso-hero.png)
 
-## What Is Included
+**HELLO saves comments as we know them by making them feel alive again.**
 
-- `hello/` - WordPress plugin.
-- `bot/` - Node.js HELLO Bridge service using the Matrix Client-Server API.
-- `DEPLOYMENT.md` - production setup and operations runbook.
-- `docs/HOSTING.md` - provider-neutral container hosting guide.
+The comment box at the bottom of a post used to be the beating heart of the web. Then the conversation drifted away into apps, group chats, social feeds, and private rooms. HELLO brings that energy back without asking WordPress to stop being WordPress.
 
-## Feature Coverage
+Install the plugin. Publish a post. HELLO gives that post a live conversation room that readers can join from Beeper, while every message still lands back where it belongs: as a real WordPress comment.
 
-- Lets a WordPress site use Nick's hosted HELLO Bridge, so customer sites only need the plugin.
-- Creates a Matrix room through the bridge when a WordPress post is published.
-- Adds a Beeper/Matrix join button below the comment form.
-- Exposes secured REST endpoints for incoming Matrix messages, room registry, and health checks.
-- Syncs Matrix text messages into WordPress comments with event deduplication.
-- Syncs approved WordPress comments back to Matrix and stores the resulting Matrix event ID.
-- Syncs comments that move from pending to approved.
-- Redacts synced Matrix events when the matching WordPress comment is spammed or trashed.
-- Adds a post metabox for inspecting, creating, or repairing the Matrix room for a post.
-- Resolves Matrix users to Gravatar metadata through a private DM onboarding flow.
-- Keeps bot state in local JSON files with no plaintext reader email storage.
-- Provides direct single-site bot mode for development and local automated tests.
-- Ships a provider-neutral Docker/Compose path for hosted bridge deployments.
+No new commenting system. No customer-run server. No "please create a Matrix bot" setup screen. Just WordPress comments with a pulse.
 
-## Quick Start
+## Why This Is Cool
 
-1. Copy or symlink `hello/` into `wp-content/plugins/`.
+HELLO makes comments portable, alive, and still yours.
+
+- Readers can jump into the discussion from Beeper.
+- Messages from Beeper come back as native WordPress comments.
+- Approved WordPress comments flow back into the room.
+- Moderation still happens in WordPress.
+- Comment history stays attached to the post, not trapped in a social platform.
+- Site owners only install the plugin.
+
+![HELLO flow from plugin install to post comments and Beeper chat](assets/hello-riso-flow.png)
+
+## The Big Idea
+
+Every post deserves its own little room.
+
+HELLO treats a comment thread like a place people can enter, not just a form people submit. It keeps the durable, public, archive-friendly shape of WordPress comments, then adds the immediacy of chat on top.
+
+That means a reader can reply from Beeper and still help build the canonical conversation on the post. It is the old blog comment dream, with modern pipes.
+
+## Install
+
+1. Upload the `hello/` plugin folder or install `dist/hello.zip`.
 2. Activate **HELLO** in WordPress.
-3. On your bridge server, create a bot `.env` from `bot/.env.example`.
-4. Run the bridge:
+3. Publish a post.
 
-```sh
-cd bot
-npm install
-npm start
-```
+That is it for customer sites. HELLO uses the hosted RegionallyFamous bridge automatically.
 
-When a post is published, the plugin registers with Nick's hosted bridge, asks it to create a Matrix room, and stores the returned room ID on the post. The comment form gets a Beeper/Matrix join button. The bridge listens to mapped Matrix rooms and posts messages back through each site’s plugin webhook. Normal approved WordPress comments are sent from the plugin to the bridge, then into Matrix.
+## What Readers See
+
+On posts with a HELLO room, readers get a simple **Join the discussion in Beeper** button. If Beeper does not open automatically, HELLO shows a copyable room address they can paste into Beeper's Matrix room join flow.
+
+## Repos
+
+- Plugin: https://github.com/RegionallyFamous/HELLO
+- Bridge service: https://github.com/RegionallyFamous/HELLO-Bridge
+- Technical wiki: https://github.com/RegionallyFamous/HELLO/wiki
 
 ## Development
 
@@ -47,18 +56,4 @@ npm run check
 npm run package:plugin
 ```
 
-`npm run check` runs PHP syntax checks, Node syntax checks, and Node tests.
-
-The plugin REST webhook is:
-
-```text
-POST /wp-json/hello/v1/incoming
-```
-
-The webhook requires `bot_secret` to match the value stored in WordPress settings.
-
 HELLO targets WordPress 7.0+ and PHP 8.0+.
-
-See [DEPLOYMENT.md](DEPLOYMENT.md) for the production runbook.
-
-For a future-proof hosted bridge, package the bridge as an OCI container and keep its state on a persistent volume. See [docs/HOSTING.md](docs/HOSTING.md).

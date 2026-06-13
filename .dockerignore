@@ -1,7 +1,0 @@
-*
-!package.json
-!package-lock.json
-!bot/package.json
-!bot/Dockerfile
-!bot/src/
-!bot/src/**

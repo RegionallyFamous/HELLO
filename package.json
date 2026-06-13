@@ -2,13 +2,10 @@
   "name": "hello",
   "version": "0.1.0",
   "private": true,
-  "description": "WordPress + Matrix/Beeper comment sync plugin and bot.",
+  "description": "WordPress plugin that makes native comments feel alive in Beeper.",
   "scripts": {
-    "check": "npm run check:php && npm --prefix bot run check && npm --prefix bot test",
+    "check": "npm run check:php",
     "check:php": "find hello -name '*.php' -print0 | xargs -0 -n1 php -l",
     "package:plugin": "mkdir -p dist && rm -f dist/hello.zip && cd hello && zip -qr ../dist/hello.zip ."
-  },
-  "workspaces": [
-    "bot"
-  ]
+  }
 }
