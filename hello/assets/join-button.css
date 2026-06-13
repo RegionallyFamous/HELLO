@@ -29,6 +29,53 @@
   line-height: 1.5;
 }
 
-.hello-hint a {
-  white-space: nowrap;
+.hello-copy-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  align-items: center;
+  margin-block-start: 0.85rem;
+}
+
+.hello-room-address {
+  max-width: min(100%, 32rem);
+  overflow-wrap: anywhere;
+  padding: 0.4rem 0.55rem;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  background: #f9fafb;
+  color: #111827;
+  font-size: 0.875rem;
+}
+
+.hello-copy-btn {
+  min-height: 2.25rem;
+  padding: 0.45rem 0.75rem;
+  border: 1px solid #9ca3af;
+  border-radius: 6px;
+  background: #ffffff;
+  color: #111827;
+  font: inherit;
+  font-weight: 600;
+  line-height: 1.2;
+  cursor: pointer;
+}
+
+.hello-copy-btn:hover,
+.hello-copy-btn:focus {
+  border-color: #2563eb;
+  color: #1d4ed8;
+}
+
+.hello-fallback,
+.hello-copy-status {
+  max-width: 36rem;
+  margin: 0.5rem 0 0;
+  color: #4b5563;
+  font-size: 0.875rem;
+  line-height: 1.45;
+}
+
+.hello-copy-status:empty {
+  display: none;
 }

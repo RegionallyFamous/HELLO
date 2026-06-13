@@ -479,15 +479,30 @@ class Comment_Sync
         ?>
         <div class="hello-join">
             <a
-                href="<?php echo esc_url($matrix_uri, ['matrix']); ?>"
+                href="<?php echo esc_url($web_uri); ?>"
                 class="hello-join-btn"
+                target="_blank"
+                rel="noopener"
                 data-matrix-uri="<?php echo esc_attr($matrix_uri); ?>"
                 data-web-uri="<?php echo esc_url($web_uri); ?>"
             ><?php esc_html_e('Join the discussion in Beeper', 'hello'); ?></a>
             <p class="hello-hint">
-                <?php esc_html_e('Opens in Beeper or any Matrix client. Messages appear here as comments.', 'hello'); ?>
-                <a href="<?php echo esc_url($web_uri); ?>"><?php esc_html_e('Open on matrix.to', 'hello'); ?></a>
+                <?php esc_html_e('Messages sent in Beeper appear here as comments.', 'hello'); ?>
             </p>
+            <div class="hello-copy-row">
+                <code class="hello-room-address"><?php echo esc_html($matrix_target); ?></code>
+                <button
+                    type="button"
+                    class="hello-copy-btn"
+                    data-copy-value="<?php echo esc_attr($matrix_target); ?>"
+                    data-copy-label="<?php echo esc_attr__('Copy room address', 'hello'); ?>"
+                    data-copied-label="<?php echo esc_attr__('Copied', 'hello'); ?>"
+                ><?php esc_html_e('Copy room address', 'hello'); ?></button>
+            </div>
+            <p class="hello-fallback">
+                <?php esc_html_e('In Beeper, use Join Matrix room and paste this address if the button does not open it.', 'hello'); ?>
+            </p>
+            <p class="hello-copy-status" aria-live="polite"></p>
         </div>
         <?php
     }
